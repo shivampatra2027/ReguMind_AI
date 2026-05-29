@@ -2,6 +2,12 @@
 
 > Transforming Regulatory Compliance with Agentic Intelligence
 
+![Status](https://img.shields.io/badge/status-in%20development-orange)
+![Backend](https://img.shields.io/badge/backend-Node.js-green)
+![Frontend](https://img.shields.io/badge/frontend-React-blue)
+![Database](https://img.shields.io/badge/database-MongoDB-green)
+![AI](https://img.shields.io/badge/AI-Gemini-orange)
+
 ## Overview
 
 ReguMind AI is an AI-powered Regulatory Compliance Operating System designed to help banks and financial institutions automate the compliance lifecycle.
@@ -12,15 +18,45 @@ ReguMind AI streamlines this process through intelligent document analysis, auto
 
 ---
 
+## Documentation
+
+📄 **Project Flow & Design Document**
+
+https://docs.google.com/document/d/1jHjlFIF-77lvebaQGzxRZuwit7eb7Pq5HRP0a0LZVtw/edit?usp=sharing
+
+This document contains:
+
+* Detailed workflow
+* System architecture
+* Agent responsibilities
+* Database design
+* Development roadmap
+* MVP scope
+
+---
+
+## Current Status
+
+🚧 Project under active development
+
+### Current Milestone
+
+* Backend Initialization
+* Database Design
+* Authentication Setup
+* PDF Upload Pipeline
+
+---
+
 ## Problem Statement
 
 Current compliance workflows are:
 
-- Manual and time-consuming
-- Difficult to track across departments
-- Error-prone
-- Poorly auditable
-- Highly dependent on human coordination
+* Manual and time-consuming
+* Difficult to track across departments
+* Error-prone
+* Poorly auditable
+* Highly dependent on human coordination
 
 As regulatory complexity grows, institutions face increasing operational and compliance risks.
 
@@ -54,38 +90,38 @@ Audit Report Generation
 
 ### Document Intelligence
 
-- Upload RBI / SEBI circulars
-- Automated document parsing
-- Regulation summarization
-- Obligation extraction
+* Upload RBI / SEBI circulars
+* Automated document parsing
+* Regulation summarization
+* Obligation extraction
 
 ### MAP Generation
 
-- Generate Management Action Points (MAPs)
-- Assign responsible departments
-- Track completion status
+* Generate Management Action Points (MAPs)
+* Assign responsible departments
+* Track completion status
 
 ### Risk Scoring Engine
 
 Calculate compliance risk based on:
 
-- Regulation severity
-- Deadline proximity
-- Implementation status
-- Overdue actions
+* Regulation severity
+* Deadline proximity
+* Implementation status
+* Overdue actions
 
 ### Compliance Dashboard
 
-- Compliance overview
-- Active regulations
-- Pending actions
-- Risk analytics
+* Compliance overview
+* Active regulations
+* Pending actions
+* Risk analytics
 
 ### Audit Reporting
 
-- Compliance history
-- Evidence tracking
-- Audit-ready reports
+* Compliance history
+* Evidence tracking
+* Audit-ready reports
 
 ---
 
@@ -121,34 +157,34 @@ Generates audit-ready compliance reports.
 
 ### Frontend
 
-- React.js
-- Tailwind CSS
+* React.js
+* Tailwind CSS
 
 ### Backend
 
-- Node.js
-- Express.js
+* Node.js
+* Express.js
 
 ### Database
 
-- MongoDB Atlas
+* MongoDB Atlas
 
 ### AI Layer
 
-- Google Gemini API
+* Google Gemini API
 
 ### File Processing
 
-- PDF Parser
+* PDF Parser
 
 ### Authentication
 
-- JWT
+* JWT Authentication
 
 ### Deployment
 
-- Vercel (Frontend)
-- Render / Railway (Backend)
+* Vercel (Frontend)
+* Render / Railway (Backend)
 
 ---
 
@@ -178,23 +214,23 @@ backend/
 
 ### Included
 
-- User Authentication
-- PDF Upload
-- Regulation Extraction
-- MAP Generation
-- Department Assignment
-- Risk Scoring
-- Compliance Dashboard
-- Audit Report Generation
+* User Authentication
+* PDF Upload
+* Regulation Extraction
+* MAP Generation
+* Department Assignment
+* Risk Scoring
+* Compliance Dashboard
+* Audit Report Generation
 
 ### Future Scope
 
-- Real-time RBI Monitoring
-- SEBI Monitoring
-- ERP Integrations
-- Autonomous Escalations
-- Predictive Compliance Analytics
-- Multilingual Support
+* Real-time RBI Monitoring
+* SEBI Monitoring
+* ERP Integrations
+* Autonomous Escalations
+* Predictive Compliance Analytics
+* Multilingual Support
 
 ---
 
@@ -281,28 +317,28 @@ GET /api/audit-report/:id
 
 ### Phase 1
 
-- Backend Initialization
-- MongoDB Setup
-- Authentication
-- File Upload
+* Backend Initialization
+* MongoDB Setup
+* Authentication
+* File Upload
 
 ### Phase 2
 
-- PDF Processing
-- Gemini Integration
-- Regulation Extraction
+* PDF Processing
+* Gemini Integration
+* Regulation Extraction
 
 ### Phase 3
 
-- MAP Generation
-- Risk Scoring
-- Dashboard APIs
+* MAP Generation
+* Risk Scoring
+* Dashboard APIs
 
 ### Phase 4
 
-- Audit Reports
-- Deployment
-- Demo Preparation
+* Audit Reports
+* Deployment
+* Demo Preparation
 
 ---
 
@@ -310,12 +346,12 @@ GET /api/audit-report/:id
 
 ### Pixel_Potato
 
-- Shivam Patra
-- Anjali Anand
-- Amisha Mishra
+* Shivam Patra
+* Anjali Anand
+* Amisha Mishra
 
 ---
 
 ## Vision
 
-ReguMind AI aims to transform compliance management from a reactive manual process into a proactive AI-driven compliance ecosystem for modern financial institutions.
+ReguMind AI transforms compliance management from a reactive manual process into a proactive AI-driven compliance ecosystem for modern financial institutions.
