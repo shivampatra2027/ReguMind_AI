@@ -4,7 +4,7 @@
 
 ## System Architecture
 
-![ReguMind AI Architecture](https://assets.leetcode.com/users/images/419025bf-d157-458a-bb15-8c62ee3b4114_1780254651.0277019.png)
+![ReguMind AI Architecture](https://assets.leetcode.com/users/images/9fa012dd-bbf3-4c0d-a552-22b9871842e5_1780254897.95465.png)
 
 **High-Level Architecture Overview**
 
