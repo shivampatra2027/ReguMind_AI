@@ -182,7 +182,7 @@ Start backend in production mode:
 
 ```bash
 cd backend
-npm start
+npm start .
 ```
 
 ## Product Vision
