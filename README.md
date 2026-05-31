@@ -1,190 +1,91 @@
 # ReguMind AI
 
-AI-powered regulatory compliance platform for document analysis, obligation tracking, risk scoring, and audit-ready compliance workflows.
+> AI-powered regulatory compliance platform for document analysis, obligation tracking, risk scoring, and audit-ready compliance workflows.
+
+## System Architecture
+
+![ReguMind AI Architecture](https://assets.leetcode.com/users/images/419025bf-d157-458a-bb15-8c62ee3b4114_1780254651.0277019.png)
+
+**High-Level Architecture Overview**
+
+* React frontend for compliance dashboards and document management.
+* Express.js backend exposing secure REST APIs.
+* Google OAuth + JWT for authentication and authorization.
+* Gemini-powered AI agent layer for regulation analysis and compliance automation.
+* MongoDB Atlas for persistent storage.
+* File storage layer for regulatory PDFs and evidence documents.
+
+---
 
 ## Current Status
 
-ReguMind AI is under active development. The current implementation includes:
+ReguMind AI is under active development.
 
-- Express backend scaffold
-- MongoDB connection setup
-- Google OAuth login API
-- JWT-based protected profile route
-- Vite React frontend
-- Google login UI
-- Protected dashboard
+---
 
-## Tech Stack
-
-### Frontend
-
-- React
-- Vite
-- Tailwind CSS
-- Axios
-- React Router
-- `@react-oauth/google`
-
-### Backend
-
-- Node.js
-- Express.js
-- MongoDB
-- Mongoose
-- JWT
-- Google OAuth via `google-auth-library`
-
-## Project Structure
+### Better Repository Structure
 
 ```text
 ReguMind_Project/
+│
+├── docs/
+│   ├── regumind-architecture.png
+│   └── workflow.png
+│
 ├── backend/
-│   ├── src/
-│   │   ├── config/
-│   │   ├── controllers/
-│   │   ├── middleware/
-│   │   ├── models/
-│   │   ├── routes/
-│   │   ├── services/
-│   │   └── app.js
-│   ├── .env.example
-│   ├── package.json
-│   └── server.js
-│
 ├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   ├── services/
-│   │   ├── App.jsx
-│   │   └── main.jsx
-│   ├── .env.example
-│   ├── package.json
-│   └── vite.config.js
-│
-├── AGENT.md
-└── README.md
+├── README.md
+└── AGENT.md
 ```
 
-## Environment Setup
-
-### Backend
-
-Create `backend/src/.env` or `backend/.env`:
-
-```env
-PORT=5000
-MONGODB_URI=mongodb://127.0.0.1:27017/regumind_ai
-JWT_SECRET=replace_with_a_secure_secret
-GOOGLE_CLIENT_ID=your_google_client_id
-GEMINI_API_KEY=
-```
-
-### Frontend
-
-Create `frontend/.env`:
-
-```env
-VITE_GOOGLE_CLIENT_ID=your_google_client_id
-VITE_API_BASE_URL=http://localhost:5000/api
-```
-
-Use the same Google OAuth client ID in both backend and frontend env files.
-
-## Installation
-
-Install backend dependencies:
+Then commit:
 
 ```bash
-cd backend
-npm install
+mkdir docs
 ```
 
-Install frontend dependencies:
-
-```bash
-cd frontend
-npm install
-```
-
-## Development
-
-Start the backend API:
-
-```bash
-cd backend
-npm run dev
-```
-
-Start the frontend app:
-
-```bash
-cd frontend
-npm run dev
-```
-
-Default local URLs:
-
-- Backend: `http://localhost:5000`
-- Frontend: `http://localhost:5173`
-
-## Authentication Flow
-
-1. Frontend renders Google login using `@react-oauth/google`.
-2. Google returns an ID token credential.
-3. Frontend posts the credential to `POST /api/auth/google`.
-4. Backend verifies the Google token.
-5. Backend creates or updates the user in MongoDB.
-6. Backend returns a JWT and user profile.
-7. Frontend stores `token` and `user` in `localStorage`.
-8. Dashboard is protected by the stored token and profile verification.
-
-## API Endpoints
-
-### Health
-
-```http
-GET /
-```
-
-### Auth
-
-```http
-POST /api/auth/google
-GET /api/auth/profile
-```
-
-`GET /api/auth/profile` requires:
-
-```http
-Authorization: Bearer <jwt>
-```
-
-## Frontend Routes
+Move the image:
 
 ```text
-/login
-/dashboard
+docs/regumind-architecture.png
 ```
 
-`/dashboard` is protected and redirects to `/login` when no token is present.
+and reference it:
 
-## Build
-
-Build frontend:
-
-```bash
-cd frontend
-npm run build
+```md
+![ReguMind AI Architecture](./docs/regumind-architecture.png)
 ```
 
-Start backend in production mode:
+---
 
-```bash
-cd backend
-npm start .
+### One More Improvement
+
+Add a project progress section:
+
+```md
+## Progress Tracker
+
+### Phase 1: Foundation
+- [x] Backend Setup
+- [x] MongoDB Integration
+- [x] Google OAuth
+- [x] JWT Authentication
+- [x] React Frontend
+
+### Phase 2: Document Management
+- [ ] PDF Upload
+- [ ] Document Storage
+- [ ] Metadata Tracking
+
+### Phase 3: AI Compliance Engine
+- [ ] PDF Parsing
+- [ ] Gemini Integration
+- [ ] Obligation Extraction
+- [ ] MAP Generation
+
+### Phase 4: Compliance Operations
+- [ ] Department Mapping
+- [ ] Risk Scoring
+- [ ] Evidence Validation
+- [ ] Audit Reports
 ```
-
-## Product Vision
-
-ReguMind AI aims to help compliance teams move from manual regulatory tracking to an AI-assisted operating model for document review, action planning, risk monitoring, and audit readiness.
