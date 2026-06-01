@@ -22,10 +22,15 @@
 
 ### Next
 
-* Connect Upload PDF page to backend  ->DOne
 * Connect Analysis page to AI APIs
 * Connect Risk Scoring page to backend
 * Connect Audit Reports page to backend
+
+### Recently Completed
+
+* Connected Upload PDF page to backend upload API
+* Added drag-and-drop PDF upload UI
+* Added upload progress, success, and error states
 
 ---
 
@@ -42,18 +47,23 @@
 * Architecture Diagram
 * README Documentation
 * PR #1 Review & Merge
+* Document Schema
+* Multer Configuration
+* JWT Protected Upload API
+* Document Metadata Storage
+* Document Listing API
+* Single Document Retrieval API
 
 ### In Progress
 
-* Document Upload Module
-* Document Schema Design
+* PDF Text Extraction
+* AI Compliance Engine Planning
 
 ### Next
 
-* Multer Integration
-* Upload API
-* Document Metadata Storage
 * PDF Text Extraction
+* Gemini Integration
+* Obligation Extraction API
 
 ---
 
@@ -69,9 +79,10 @@
 
 ### Phase 2: Document Management
 
-* [ ] PDF Upload API
-* [ ] Document Storage
-* [ ] Metadata Tracking
+* [x] PDF Upload API
+* [x] Document Storage
+* [x] Metadata Tracking
+* [x] Frontend Upload Page
 
 ### Phase 3: AI Compliance Engine
 
@@ -85,14 +96,3 @@
 * [ ] Risk Scoring Engine
 * [ ] Evidence Validation
 * [ ] Audit Reports
-
-Backend:
-### Completed
-
-- Document Schema
-- Multer Configuration
-- JWT Protected Upload API
-- Document Metadata Storage
-- Document Listing API
-- Single Document Retrieval API
-- End-to-End PDF Upload Testing
