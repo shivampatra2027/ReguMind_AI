@@ -43,13 +43,13 @@ const Login = () => (
           onClick={() => {
             localStorage.setItem('token', 'demo');
             localStorage.setItem(
-              'user',
-              JSON.stringify({
-                name: 'Amisha Mishra',
-                email: 'demo@regumind.ai',
-                role: 'Compliance Officer',
-              })
-            );
+  'user',
+  JSON.stringify({
+    name: 'ReguMind Administrator',
+    email: 'admin@regumind.ai',
+    role: 'System Admin',
+  })
+);
             window.location.href = '/dashboard';
           }}
           className="rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-4 py-3 font-semibold text-white transition hover:scale-105"
