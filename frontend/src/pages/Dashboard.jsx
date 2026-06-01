@@ -2,6 +2,15 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getProfile } from '../services/authService';
 
+const modules = [
+  { title: "Upload PDF", path: "/upload" },
+  { title: "AI Analysis", path: "/analysis" },
+  { title: "Risk Scoring", path: "/risk" },
+  { title: "Evidence Validation", path: "/evidence" },
+  { title: "Audit Reports", path: "/audit" },
+  { title: "AI Chatbot", path: "/chatbot" },
+];
+
 const getStoredUser = () => {
   try {
     return JSON.parse(localStorage.getItem('user') || '{}');
@@ -14,26 +23,29 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(getStoredUser);
 
+  // useEffect(() => {
+  //   const loadProfile = async () => {
+  //     try {
+  //       const data = await getProfile();
+
+  //       if (!data.success || !data.user) {
+  //         throw new Error('Profile request failed.');
+  //       }
+
+  //       localStorage.setItem('user', JSON.stringify(data.user));
+  //       setUser(data.user);
+  //     } catch (error) {
+  //       localStorage.removeItem('token');
+  //       localStorage.removeItem('user');
+  //       navigate('/login', { replace: true });
+  //     }
+  //   };
+
+  //   loadProfile();
+  // }, [navigate]);
   useEffect(() => {
-    const loadProfile = async () => {
-      try {
-        const data = await getProfile();
-
-        if (!data.success || !data.user) {
-          throw new Error('Profile request failed.');
-        }
-
-        localStorage.setItem('user', JSON.stringify(data.user));
-        setUser(data.user);
-      } catch (error) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        navigate('/login', { replace: true });
-      }
-    };
-
-    loadProfile();
-  }, [navigate]);
+  setUser(getStoredUser());
+}, []);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -75,6 +87,24 @@ const Dashboard = () => {
               </p>
             </div>
           </div>
+        </div>
+        
+                <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {modules.map((module) => (
+            <button
+              key={module.title}
+              onClick={() => navigate(module.path)}
+              className="rounded-xl border border-slate-200 bg-white p-6 text-left shadow-sm transition hover:shadow-lg hover:border-emerald-500"
+            >
+              <h3 className="text-lg font-semibold text-slate-900">
+                {module.title}
+              </h3>
+
+              <p className="mt-2 text-sm text-slate-600">
+                Open {module.title} module
+              </p>
+            </button>
+          ))}
         </div>
       </section>
     </main>
