@@ -22,7 +22,7 @@
 
 ### Next
 
-* Connect Upload PDF page to backend
+* Connect Upload PDF page to backend  ->DOne
 * Connect Analysis page to AI APIs
 * Connect Risk Scoring page to backend
 * Connect Audit Reports page to backend
@@ -85,3 +85,14 @@
 * [ ] Risk Scoring Engine
 * [ ] Evidence Validation
 * [ ] Audit Reports
+
+Backend:
+### Completed
+
+- Document Schema
+- Multer Configuration
+- JWT Protected Upload API
+- Document Metadata Storage
+- Document Listing API
+- Single Document Retrieval API
+- End-to-End PDF Upload Testing
