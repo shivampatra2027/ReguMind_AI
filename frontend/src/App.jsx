@@ -8,12 +8,14 @@ import RiskScoring from './pages/RiskScoring';
 import AuditReport from './pages/AuditReport';
 import EvidenceValidation from './pages/EvidenceValidation';
 import Chatbot from './pages/Chatbot';
+import Documents from './pages/Documents';
 
 const App = () => (
   <BrowserRouter>
     <Routes>
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<Login />} />
+      
       <Route
         path="/dashboard"
         element={
@@ -22,6 +24,14 @@ const App = () => (
           </ProtectedRoute>
         }
       />
+      <Route
+  path="/documents"
+  element={
+    <ProtectedRoute>
+      <Documents />
+    </ProtectedRoute>
+  }
+/>
 
        <Route
     path="/upload"
