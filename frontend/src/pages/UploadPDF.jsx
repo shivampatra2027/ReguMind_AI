@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaCheckCircle, FaCloudUploadAlt, FaFilePdf, FaTimesCircle } from 'react-icons/fa';
+import WorkflowStepper from "../components/WorkflowStepper";
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 const maxFileSize = 10 * 1024 * 1024;
@@ -131,26 +132,16 @@ const UploadPDF = () => {
   return (
     <main className="min-h-screen bg-[#f6f8fb] px-4 py-8">
       <section className="mx-auto max-w-5xl">
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <button
-              type="button"
-              onClick={() => navigate('/dashboard')}
-              className="mb-4 inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-emerald-400 hover:text-emerald-700"
-            >
-              <FaArrowLeft className="h-3.5 w-3.5" />
-              Dashboard
-            </button>
-            <p className="text-sm font-medium text-emerald-700">Document Intake</p>
-            <h1 className="mt-1 text-3xl font-semibold text-slate-950">Upload PDF</h1>
-          </div>
+         <WorkflowStepper currentStep={0} />
+        <div className="mb-8 rounded-3xl bg-gradient-to-r from-blue-600 via-blue-700 to-cyan-500 p-8 text-white shadow-xl">
+  <h1 className="text-4xl font-bold">
+    Upload Regulatory Document
+  </h1>
 
-          <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm">
-            <p className="font-medium text-slate-950">Accepted format</p>
-            <p className="mt-1 text-slate-600">PDF up to 10MB</p>
-          </div>
-        </div>
-
+  <p className="mt-3 text-lg text-blue-100">
+    Upload PDFs and let AI perform compliance analysis, risk assessment and audit preparation.
+  </p>
+</div>
         <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
           <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
             <div
@@ -160,14 +151,14 @@ const UploadPDF = () => {
               }}
               onDragLeave={() => setIsDragging(false)}
               onDrop={handleDrop}
-              className={`flex min-h-[320px] flex-col items-center justify-center rounded-lg border-2 border-dashed px-6 py-10 text-center transition ${
-                isDragging
-                  ? 'border-emerald-500 bg-emerald-50'
-                  : 'border-slate-300 bg-slate-50 hover:border-emerald-400'
-              }`}
+              className={`flex min-h-[350px] flex-col items-center justify-center rounded-3xl border-2 border-dashed px-6 py-10 text-center transition-all duration-300 ${
+  isDragging
+    ? 'border-cyan-500 bg-cyan-50'
+    : 'border-cyan-300 bg-gradient-to-br from-blue-50 to-cyan-50 hover:border-cyan-500'
+}`}
             >
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
-                <FaCloudUploadAlt className="h-8 w-8" />
+              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-xl">
+                <FaCloudUploadAlt className="h-12 w-12" />
               </div>
 
               <h2 className="mt-5 text-xl font-semibold text-slate-950">Drop PDF here</h2>
@@ -187,8 +178,7 @@ const UploadPDF = () => {
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploading}
-                className="mt-6 rounded-md bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
-              >
+                className="mt-6 rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-500 px-6 py-3 font-semibold text-white shadow-lg transition hover:scale-105">
                 Browse File
               </button>
             </div>
@@ -224,7 +214,7 @@ const UploadPDF = () => {
               type="button"
               onClick={handleUpload}
               disabled={!file || isUploading}
-              className="mt-6 w-full rounded-md bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+             className="mt-6 w-full rounded-2xl bg-gradient-to-r from-blue-600 via-blue-700 to-cyan-500 px-6 py-4 text-lg font-semibold text-white shadow-xl transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl disabled:bg-slate-300"
             >
               {isUploading ? 'Uploading...' : 'Upload PDF'}
             </button>

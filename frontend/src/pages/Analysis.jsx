@@ -1,3 +1,5 @@
+import WorkflowStepper from "../components/WorkflowStepper";
+import { useNavigate } from "react-router-dom";
 const Analysis = () => {
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-cyan-100 p-8">
@@ -7,6 +9,7 @@ const Analysis = () => {
   <div className="absolute bottom-20 left-1/2 h-72 w-72 rounded-full bg-indigo-400/20 blur-3xl"></div>
 </div>
       <div className="mx-auto max-w-6xl">
+         <WorkflowStepper currentStep={1} />
 
         <h1 className="text-4xl font-bold text-slate-900">
           AI Compliance Analysis
@@ -79,7 +82,18 @@ const Analysis = () => {
   </div>
 </div>
 
-      </div>
+<div className="mt-8 flex justify-end">
+  <button
+    onClick={() => navigate("/risk")}
+    className="rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-6 py-3 font-semibold text-white shadow-lg transition hover:scale-105"
+  >
+    View Risk Assessment →
+  </button>
+</div>
+
+</div>
+     
+      
     </main>
   );
 };

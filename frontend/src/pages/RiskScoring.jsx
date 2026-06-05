@@ -1,4 +1,8 @@
+import WorkflowStepper from "../components/WorkflowStepper";
+import { useNavigate } from "react-router-dom";
+
 const RiskScoring = () => {
+  const navigate = useNavigate();
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-cyan-100 p-8">
 
@@ -9,6 +13,7 @@ const RiskScoring = () => {
       </div>
 
       <div className="mx-auto max-w-6xl">
+         <WorkflowStepper currentStep={2} />
 
         <div className="mb-8">
           <span className="rounded-full bg-blue-100 px-4 py-2 text-sm font-semibold text-blue-700">
@@ -85,7 +90,14 @@ const RiskScoring = () => {
             Upload and analyze documents to generate AI-based risk scoring.
           </p>
         </div>
-
+<div className="mt-8 flex justify-end">
+  <button
+    onClick={() => navigate("/audit")}
+    className="rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 px-6 py-3 font-semibold text-white shadow-lg transition hover:scale-105"
+  >
+    Generate Audit Report →
+  </button>
+</div>
       </div>
     </main>
   );
