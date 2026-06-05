@@ -109,7 +109,7 @@ const Dashboard = () => {
 
   {/* View History */}
   <button
-    onClick={() => navigate('/history')}
+    onClick={() => navigate('/documents')}
     className="rounded-3xl bg-white/80 backdrop-blur-xl p-10 text-left shadow-xl border border-slate-200 transition-all duration-300 hover:scale-[1.02] hover:border-cyan-500"
   >
     <h2 className="text-3xl font-bold text-slate-900">

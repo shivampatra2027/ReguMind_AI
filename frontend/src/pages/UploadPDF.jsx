@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import axios from "axios";
+
 const UploadPDF = () => {
   const [file, setFile] = useState(null);
 
@@ -7,16 +9,43 @@ const UploadPDF = () => {
     setFile(e.target.files[0]);
   };
 
-  const handleUpload = () => {
-    if (!file) {
-      alert("Please select a PDF file");
-      return;
-    }
+  const handleUpload = async () => {
+  if (!file) {
+    alert("Please select a PDF file");
+    return;
+  }
 
-    console.log("Selected File:", file);
+  try {
+    const token = localStorage.getItem("token");
 
-    // Backend API call will go here later
-  };
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append(
+      "title",
+      file.name.replace(/\.pdf$/i, "")
+    );
+
+    const response = await axios.post(
+      "http://localhost:5000/api/documents/upload",
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    alert("PDF uploaded successfully!");
+    console.log(response.data);
+  } catch (error) {
+    console.error(error);
+    alert(
+      error.response?.data?.message ||
+      "Upload failed"
+    );
+  }
+};
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-cyan-100 p-8">
