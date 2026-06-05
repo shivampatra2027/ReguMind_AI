@@ -14,23 +14,25 @@
 * Added Chatbot Page
 * Created module-based dashboard layout
 * Frontend routing for major modules
+* Connected Upload PDF page to backend upload API
+* Added drag-and-drop PDF upload UI
+* Added upload progress, success, and error states
 
 ### In Progress
 
 * Google OAuth integration verification
 * Backend API integration
+* Analysis page integration with document extraction and AI analysis APIs
 
 ### Next
 
-* Connect Analysis page to AI APIs
+* Connect Analysis page to PDF extraction and Gemini analysis workflow
 * Connect Risk Scoring page to backend
 * Connect Audit Reports page to backend
 
 ### Recently Completed
 
-* Connected Upload PDF page to backend upload API
-* Added drag-and-drop PDF upload UI
-* Added upload progress, success, and error states
+* Upload PDF page now sends authenticated multipart uploads to `/api/documents/upload`
 
 ---
 
@@ -53,17 +55,26 @@
 * Document Metadata Storage
 * Document Listing API
 * Single Document Retrieval API
+* PDF Text Extraction Service
+* Raw Text Storage in MongoDB
+* Document Processing Status Tracking
+* Protected Text Extraction API
+* Gemini Document Analysis Service
+* Compliance Obligation Extraction Prompt
+* Document Analysis Status Tracking
+* Protected Gemini Analysis API
 
 ### In Progress
 
-* PDF Text Extraction
-* AI Compliance Engine Planning
+* Google GenAI SDK dependency installation verification
+* End-to-end testing with real uploaded RBI circulars
 
 ### Next
 
-* PDF Text Extraction
-* Gemini Integration
-* Obligation Extraction API
+* Resolve local npm registry certificate issue for `@google/genai`
+* Run live Gemini analysis with `GEMINI_API_KEY`
+* Add frontend controls for Extract Text and Analyze Document
+* Add obligation review UI
 
 ---
 
@@ -86,9 +97,9 @@
 
 ### Phase 3: AI Compliance Engine
 
-* [ ] PDF Parsing
-* [ ] Gemini Integration
-* [ ] Obligation Extraction
+* [x] PDF Parsing
+* [x] Gemini Integration
+* [x] Obligation Extraction
 * [ ] MAP Generation
 
 ### Phase 4: Compliance Operations
@@ -96,4 +107,13 @@
 * [ ] Risk Scoring Engine
 * [ ] Evidence Validation
 * [ ] Audit Reports
-.
+
+---
+
+## Latest Implementation Notes
+
+* Added `POST /api/documents/:id/extract` to extract PDF text and store `rawText`.
+* Added `POST /api/documents/:id/analyze` to analyze extracted text with Gemini and store `summary`, `obligations`, and `analysisStatus`.
+* Updated Gemini prompt to extract only actionable RBI compliance obligations, capped at 10.
+* Backend app load check passes.
+* `@google/genai` is declared in `backend/package.json`, but npm install could not complete locally due 
