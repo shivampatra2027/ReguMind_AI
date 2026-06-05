@@ -1,4 +1,3 @@
-
 const express = require('express');
 const multer = require('multer');
 
@@ -20,9 +19,14 @@ const handleUpload = (req, res, next) => {
     }
 
     if (error instanceof multer.MulterError) {
+      const message =
+        error.code === 'LIMIT_FILE_SIZE'
+          ? 'PDF file must be 10MB or smaller'
+          : error.field || 'Invalid upload';
+
       return res.status(400).json({
         success: false,
-        message: error.message,
+        message,
       });
     }
 
