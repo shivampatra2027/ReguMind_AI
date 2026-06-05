@@ -63,6 +63,18 @@ const Documents = () => {
                   Uploaded:{" "}
                   {new Date(doc.createdAt).toLocaleString()}
                 </p>
+                <div className="mt-4 flex items-center justify-between">
+      <span className="rounded-full bg-green-100 px-3 py-1 text-sm text-green-700">
+        {doc.status}
+      </span>
+
+      <span className="text-sm text-slate-500">
+        {new Date(doc.createdAt).toLocaleDateString()}
+      </span>
+    </div>
+
+
+
               </div>
             ))
           )}
