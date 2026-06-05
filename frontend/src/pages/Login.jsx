@@ -2,10 +2,10 @@ import GoogleAuthButton from '../components/GoogleAuthButton.jsx';
 import { HiOutlineShieldCheck } from "react-icons/hi";
 
 const Login = () => (
-  <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 px-4 py-10">
+  <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 px-4 py-10">
     <section className="w-full max-w-lg rounded-3xl border border-white/10 bg-white/10 p-10 backdrop-blur-xl shadow-2xl">
       <div className="text-center">
-        <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 shadow-2xl">
+        <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-500 via-teal-500 to-cyan-500 shadow-2xl">
   <HiOutlineShieldCheck className="text-6xl text-white drop-shadow-lg" />
 </div>
 
@@ -18,7 +18,7 @@ const Login = () => (
         </p>
 
         <div className="mt-6 flex flex-wrap justify-center gap-2">
-          <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs text-emerald-300">
+          <span className="rounded-full bg-blue-500/20 px-3 py-1 text-xs text-blue-300">
             AI Analysis
           </span>
 
@@ -43,16 +43,16 @@ const Login = () => (
           onClick={() => {
             localStorage.setItem('token', 'demo');
             localStorage.setItem(
-              'user',
-              JSON.stringify({
-                name: 'Amisha Mishra',
-                email: 'demo@regumind.ai',
-                role: 'Compliance Officer',
-              })
-            );
+  'user',
+  JSON.stringify({
+    name: 'ReguMind Administrator',
+    email: 'admin@regumind.ai',
+    role: 'System Admin',
+  })
+);
             window.location.href = '/dashboard';
           }}
-          className="rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-4 py-3 font-semibold text-white transition hover:scale-105"
+          className="rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 px-4 py-3 font-semibold text-white transition hover:scale-105"
         >
           Enter Demo Workspace
         </button>

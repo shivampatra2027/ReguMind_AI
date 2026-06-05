@@ -1,10 +1,12 @@
 const express = require('express');
 const multer = require('multer');
+
 const {
   uploadDocument,
   getDocuments,
   getDocumentById,
 } = require('../controllers/document.controller');
+
 const { upload } = require('../config/multer');
 const authMiddleware = require('../middleware/auth.middleware');
 
