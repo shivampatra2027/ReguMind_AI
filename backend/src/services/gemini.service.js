@@ -1,23 +1,50 @@
 const model = 'gemini-2.5-flash';
 
-const analysisPrompt = (rawText) => `Analyze this regulatory/compliance document.
+const analysisPrompt = (rawText) => `You are a senior banking compliance officer.
 
-Return JSON with:
+Analyze the RBI circular and extract ONLY actionable compliance obligations.
+
+A compliance obligation must:
+
+- Require a specific action
+- Be auditable
+- Be assigned to a department
+- Contain a reporting or implementation requirement
+
+Extract only statements containing concepts such as:
+- shall
+- must
+- required to
+- obligated to
+- submit
+- report
+- upload
+- comply
+
+Ignore:
+- background information
+- legal references
+- explanations
+- definitions
+- salutations
+- historical context
+
+Return JSON only in this schema:
 
 {
-  "summary": "string",
+  "summary": "Brief summary of the actionable compliance obligations only.",
   "obligations": [
     {
-      "title": "string",
-      "description": "string",
-      "department": "string",
-      "priority": "string",
-      "deadline": "string"
+      "title": "Specific obligation title",
+      "description": "Auditable action including the reporting or implementation requirement",
+      "department": "Responsible department",
+      "priority": "low | medium | high | critical",
+      "deadline": "Deadline if stated, otherwise Not specified"
     }
   ]
 }
 
-Only return valid JSON.
+Maximum 10 obligations.
 
 Document:
 ${rawText}`;
@@ -49,13 +76,16 @@ const normalizeObligations = (obligations) => {
     return [];
   }
 
-  return obligations.map((obligation) => ({
-    title: String(obligation?.title || '').trim(),
-    description: String(obligation?.description || '').trim(),
-    department: String(obligation?.department || '').trim(),
-    priority: String(obligation?.priority || '').trim(),
-    deadline: String(obligation?.deadline || '').trim(),
-  }));
+  return obligations
+    .slice(0, 10)
+    .map((obligation) => ({
+      title: String(obligation?.title || '').trim(),
+      description: String(obligation?.description || '').trim(),
+      department: String(obligation?.department || 'Compliance').trim(),
+      priority: String(obligation?.priority || 'medium').trim().toLowerCase(),
+      deadline: String(obligation?.deadline || 'Not specified').trim(),
+    }))
+    .filter((obligation) => obligation.title && obligation.description);
 };
 
 const analyzeComplianceDocument = async (rawText) => {
@@ -75,10 +105,11 @@ const analyzeComplianceDocument = async (rawText) => {
   });
 
   const parsedResponse = extractJson(response.text || '');
+  const obligations = normalizeObligations(parsedResponse.obligations);
 
   return {
     summary: String(parsedResponse.summary || '').trim(),
-    obligations: normalizeObligations(parsedResponse.obligations),
+    obligations,
   };
 };
 
