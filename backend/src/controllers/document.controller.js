@@ -2,8 +2,11 @@ const fs = require('fs/promises');
 const path = require('path');
 const mongoose = require('mongoose');
 const Document = require('../models/Document');
+const { extractTextFromPDF } = require('../services/pdf.service');
 
-const toDocumentResponse = (document) => ({
+const backendRoot = path.resolve(__dirname, '..', '..');
+
+const toDocumentResponse = (document, options = {}) => ({
   id: document._id.toString(),
   title: document.title,
   originalFileName: document.originalFileName,
@@ -12,6 +15,10 @@ const toDocumentResponse = (document) => ({
   mimeType: document.mimeType,
   uploadedBy: document.uploadedBy.toString(),
   status: document.status,
+  processingStatus: document.processingStatus,
+  summary: document.summary,
+  rawTextLength: document.rawText?.length || 0,
+  ...(options.includeRawText ? { rawText: document.rawText || '' } : {}),
   createdAt: document.createdAt,
   updatedAt: document.updatedAt,
 });
@@ -56,7 +63,7 @@ const uploadDocument = async (req, res) => {
     const document = await Document.create({
       title,
       originalFileName: req.file.originalname,
-      filePath: normalizeFilePath(path.relative(path.resolve(__dirname, '..', '..'), req.file.path)),
+      filePath: normalizeFilePath(path.relative(backendRoot, req.file.path)),
       fileSize: req.file.size,
       mimeType: req.file.mimetype,
       uploadedBy: req.user.userId,
@@ -122,7 +129,7 @@ const getDocumentById = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      document: toDocumentResponse(document),
+      document: toDocumentResponse(document, { includeRawText: true }),
     });
   } catch (error) {
     return res.status(500).json({
@@ -132,8 +139,75 @@ const getDocumentById = async (req, res) => {
   }
 };
 
+const extractDocumentText = async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid document id',
+    });
+  }
+
+  let document;
+
+  try {
+    document = await Document.findOne({
+      _id: id,
+      uploadedBy: req.user.userId,
+    });
+
+    if (!document) {
+      return res.status(404).json({
+        success: false,
+        message: 'Document not found',
+      });
+    }
+
+    document.processingStatus = 'processing';
+    document.status = 'processing';
+    await document.save();
+
+    const absoluteFilePath = path.resolve(backendRoot, document.filePath);
+
+    console.log('PDF EXTRACTION DOCUMENT ID:', document._id.toString());
+    console.log('PDF EXTRACTION FILE PATH:', absoluteFilePath);
+
+    const rawText = await extractTextFromPDF(absoluteFilePath);
+
+    document.rawText = rawText;
+    document.processingStatus = 'completed';
+    document.status = 'processed';
+    await document.save();
+
+    console.log('PDF EXTRACTION TEXT LENGTH:', rawText.length);
+
+    return res.status(200).json({
+      success: true,
+      textLength: rawText.length,
+      processingStatus: document.processingStatus,
+    });
+  } catch (error) {
+    console.error('PDF EXTRACTION ERROR:', error);
+
+    if (document) {
+      document.processingStatus = 'failed';
+      document.status = 'failed';
+      await document.save().catch((saveError) => {
+        console.error('PDF EXTRACTION STATUS UPDATE ERROR:', saveError);
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to extract text from document',
+    });
+  }
+};
+
 module.exports = {
   uploadDocument,
   getDocuments,
   getDocumentById,
+  extractDocumentText,
 };

@@ -5,6 +5,7 @@ const {
   uploadDocument,
   getDocuments,
   getDocumentById,
+  extractDocumentText,
 } = require('../controllers/document.controller');
 
 const { upload } = require('../config/multer');
@@ -39,6 +40,7 @@ const handleUpload = (req, res, next) => {
 
 router.post('/upload', authMiddleware, handleUpload, uploadDocument);
 router.get('/', authMiddleware, getDocuments);
+router.post('/:id/extract', authMiddleware, extractDocumentText);
 router.get('/:id', authMiddleware, getDocumentById);
 
 module.exports = router;

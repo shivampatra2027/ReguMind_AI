@@ -38,6 +38,21 @@ const documentSchema = new mongoose.Schema(
       enum: ['uploaded', 'processing', 'processed', 'failed'],
       default: 'uploaded',
     },
+    rawText: {
+      type: String,
+      default: '',
+    },
+    processingStatus: {
+      type: String,
+      enum: ['pending', 'processing', 'completed', 'failed'],
+      default: 'pending',
+      index: true,
+    },
+    summary: {
+      type: String,
+      default: '',
+      trim: true,
+    },
   },
   { timestamps: true }
 );
