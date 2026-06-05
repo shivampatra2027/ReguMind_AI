@@ -53,6 +53,41 @@ const documentSchema = new mongoose.Schema(
       default: '',
       trim: true,
     },
+    obligations: [
+      {
+        title: {
+          type: String,
+          default: '',
+          trim: true,
+        },
+        description: {
+          type: String,
+          default: '',
+          trim: true,
+        },
+        department: {
+          type: String,
+          default: '',
+          trim: true,
+        },
+        priority: {
+          type: String,
+          default: '',
+          trim: true,
+        },
+        deadline: {
+          type: String,
+          default: '',
+          trim: true,
+        },
+      },
+    ],
+    analysisStatus: {
+      type: String,
+      enum: ['pending', 'processing', 'completed', 'failed'],
+      default: 'pending',
+      index: true,
+    },
   },
   { timestamps: true }
 );
