@@ -8,7 +8,7 @@ import RiskScoring from './pages/RiskScoring';
 import AuditReport from './pages/AuditReport';
 import EvidenceValidation from './pages/EvidenceValidation';
 import Chatbot from './pages/Chatbot';
-import Documents from './pages/Documents';
+import Documents from './pages/documents.jsx';
 
 const App = () => (
   <BrowserRouter>
@@ -44,6 +44,15 @@ const App = () => (
 
   <Route
     path="/analysis"
+    element={
+      <ProtectedRoute>
+        <Analysis />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/analysis/:id"
     element={
       <ProtectedRoute>
         <Analysis />

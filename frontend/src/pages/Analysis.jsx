@@ -1,99 +1,185 @@
-import WorkflowStepper from "../components/WorkflowStepper";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from 'react';
+import axios from 'axios';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import WorkflowStepper from '../components/WorkflowStepper';
+
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+
+const getErrorMessage = (error) =>
+  error.response?.data?.message || error.message || 'Failed to load analysis.';
+
+const formatValue = (value) => {
+  if (!value) {
+    return 'Not specified';
+  }
+
+  return value;
+};
+
 const Analysis = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [analysis, setAnalysis] = useState(null);
+  const [isLoading, setIsLoading] = useState(Boolean(id));
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const fetchAnalysis = async () => {
+      if (!id) {
+        setAnalysis(null);
+        setIsLoading(false);
+        return;
+      }
+
+      const token = localStorage.getItem('token');
+
+      if (!token) {
+        navigate('/login', { replace: true });
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        setError('');
+
+        const response = await axios.get(`${apiBaseUrl}/documents/${id}/analysis`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        setAnalysis(response.data);
+      } catch (analysisError) {
+        setError(getErrorMessage(analysisError));
+        setAnalysis(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAnalysis();
+  }, [id, navigate]);
+
+  const obligations = analysis?.obligations || [];
+
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-cyan-100 p-8">
-      <div className="fixed inset-0 -z-10 overflow-hidden">
-  <div className="absolute top-20 left-20 h-72 w-72 rounded-full bg-blue-400/20 blur-3xl"></div>
-  <div className="absolute top-40 right-20 h-72 w-72 rounded-full bg-cyan-400/20 blur-3xl"></div>
-  <div className="absolute bottom-20 left-1/2 h-72 w-72 rounded-full bg-indigo-400/20 blur-3xl"></div>
-</div>
-      <div className="mx-auto max-w-6xl">
-         <WorkflowStepper currentStep={1} />
+    <main className="min-h-screen bg-[#f6f8fb] px-4 py-8">
+      <section className="mx-auto max-w-6xl">
+        <WorkflowStepper currentStep={1} />
 
-        <h1 className="text-4xl font-bold text-slate-900">
-          AI Compliance Analysis
-        </h1>
+        <div className="mb-8 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div>
+              <p className="text-sm font-semibold uppercase text-cyan-700">AI Compliance Analysis</p>
+              <h1 className="mt-2 text-3xl font-bold text-slate-950 md:text-4xl">
+                {analysis?.title || 'Document analysis'}
+              </h1>
+              <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
+                Review the generated summary and extracted obligations for this regulatory document.
+              </p>
+            </div>
 
-        <p className="mt-2 text-slate-600">
-          AI-generated compliance insights from uploaded documents.
-        </p>
+            <Link
+              to="/documents"
+              className="inline-flex items-center justify-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-cyan-500 hover:text-cyan-700"
+            >
+              Back to documents
+            </Link>
+          </div>
+        </div>
 
-        <div className="mt-8 grid gap-6 md:grid-cols-3">
+        {!id && (
+          <div className="rounded-lg border border-amber-200 bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-slate-950">Select a document first</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Open Document History and choose a document to view its analysis.
+            </p>
+          </div>
+        )}
 
-  <div className="rounded-3xl bg-gradient-to-r from-blue-600 to-cyan-500 p-6 text-white shadow-xl">
-    <p className="text-sm uppercase tracking-wider">
-      Compliance Score
-    </p>
+        {isLoading && (
+          <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+            <p className="text-sm font-medium text-slate-600">Loading analysis...</p>
+          </div>
+        )}
 
-    <h2 className="mt-4 text-5xl font-bold">
-      --
-    </h2>
+        {error && (
+          <div className="rounded-lg border border-red-200 bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-red-700">Unable to load analysis</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-700">{error}</p>
+          </div>
+        )}
 
-    <p className="mt-2 text-blue-100">
-      Waiting for analysis
-    </p>
-  </div>
+        {analysis && (
+          <div className="space-y-6">
+            <div className="grid gap-4 md:grid-cols-[1fr_auto]">
+              <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <h2 className="text-xl font-bold text-slate-950">Summary</h2>
+                  <span className="inline-flex w-fit rounded-md bg-cyan-50 px-3 py-1 text-sm font-semibold text-cyan-700">
+                    {analysis.analysisStatus}
+                  </span>
+                </div>
+                <p className="mt-4 whitespace-pre-line text-sm leading-7 text-slate-700">
+                  {analysis.summary || 'No summary is available for this document yet.'}
+                </p>
+              </div>
 
-  <div className="rounded-3xl bg-white/80 backdrop-blur-xl p-6 shadow-xl">
-    <p className="text-sm text-slate-500">
-      Clauses Reviewed
-    </p>
+              <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm md:min-w-48">
+                <p className="text-sm font-medium text-slate-500">Obligations</p>
+                <p className="mt-3 text-4xl font-bold text-slate-950">{obligations.length}</p>
+              </div>
+            </div>
 
-    <h2 className="mt-4 text-5xl font-bold text-slate-900">
-      --
-    </h2>
+            <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+              <div className="border-b border-slate-200 px-6 py-4">
+                <h2 className="text-xl font-bold text-slate-950">Obligations</h2>
+              </div>
 
-    <p className="mt-2 text-slate-500">
-      No document analyzed
-    </p>
-  </div>
-
-  <div className="rounded-3xl bg-white/80 backdrop-blur-xl p-6 shadow-xl">
-    <p className="text-sm text-slate-500">
-      Analysis Status
-    </p>
-
-    <h2 className="mt-4 text-xl font-bold text-cyan-600">
-      Pending
-    </h2>
-
-    <div className="mt-4 h-2 rounded-full bg-slate-200">
-      <div className="h-2 w-1/4 rounded-full bg-cyan-500"></div>
-    </div>
-  </div>
-
-</div>
-
-        <div className="mt-8 rounded-3xl bg-white/80 backdrop-blur-xl p-8 shadow-xl">
-  <h2 className="text-2xl font-bold text-slate-900">
-    AI Compliance Summary
-  </h2>
-
-  <p className="mt-5 leading-8 text-slate-600">
-    Upload a regulatory PDF to generate AI-powered compliance analysis,
-    clause extraction, policy validation and regulatory insights.
-  </p>
-
-  <div className="mt-6 rounded-2xl bg-blue-50 p-5">
-    <p className="font-medium text-blue-700">
-      No document has been analyzed yet.
-    </p>
-  </div>
-</div>
-
-<div className="mt-8 flex justify-end">
-  <button
-    onClick={() => navigate("/risk")}
-    className="rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-6 py-3 font-semibold text-white shadow-lg transition hover:scale-105"
-  >
-    View Risk Assessment →
-  </button>
-</div>
-
-</div>
-     
-      
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
+                  <thead className="bg-slate-50">
+                    <tr>
+                      <th className="px-6 py-3 font-semibold text-slate-700">Title</th>
+                      <th className="px-6 py-3 font-semibold text-slate-700">Department</th>
+                      <th className="px-6 py-3 font-semibold text-slate-700">Priority</th>
+                      <th className="px-6 py-3 font-semibold text-slate-700">Deadline</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 bg-white">
+                    {obligations.length === 0 ? (
+                      <tr>
+                        <td className="px-6 py-6 text-slate-500" colSpan="4">
+                          No obligations were found for this document.
+                        </td>
+                      </tr>
+                    ) : (
+                      obligations.map((obligation, index) => (
+                        <tr key={`${obligation.title || 'obligation'}-${index}`}>
+                          <td className="max-w-sm px-6 py-4 font-medium text-slate-950">
+                            {formatValue(obligation.title)}
+                          </td>
+                          <td className="px-6 py-4 text-slate-700">
+                            {formatValue(obligation.department)}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="inline-flex rounded-md bg-slate-100 px-3 py-1 font-semibold text-slate-700">
+                              {formatValue(obligation.priority)}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-slate-700">
+                            {formatValue(obligation.deadline)}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
     </main>
   );
 };

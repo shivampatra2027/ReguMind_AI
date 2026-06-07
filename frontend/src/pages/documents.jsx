@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { Link } from "react-router-dom";
+
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
 const Documents = () => {
   const [documents, setDocuments] = useState([]);
@@ -13,7 +16,7 @@ const Documents = () => {
       const token = localStorage.getItem("token");
 
       const response = await axios.get(
-        "http://localhost:5000/api/documents",
+        `${apiBaseUrl}/documents`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -73,7 +76,14 @@ const Documents = () => {
       </span>
     </div>
 
-
+                <div className="mt-5 flex justify-end">
+                  <Link
+                    to={`/analysis/${doc.id}`}
+                    className="rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-4 py-2 text-sm font-semibold text-white shadow-md transition hover:scale-105"
+                  >
+                    View Analysis
+                  </Link>
+                </div>
 
               </div>
             ))
