@@ -1,15 +1,17 @@
 # ReguMind AI Frontend
 
-Vite React frontend for Google authentication and the protected ReguMind AI dashboard.
+Vite React frontend for the ReguMind AI regulatory compliance workflow.
 
-## Features
+## Current Progress
 
-- Google login with `@react-oauth/google`
-- Axios auth service
-- JWT and user profile storage in `localStorage`
-- Protected dashboard route
-- Logout flow
-- Tailwind CSS styling
+- Google login with `@react-oauth/google`.
+- JWT and user profile storage in `localStorage`.
+- Protected app routes with React Router.
+- Dashboard with upload and document history entry points.
+- PDF upload page with drag-and-drop, file validation, upload progress, and success/error states.
+- Document History page that lists uploaded documents.
+- Analysis page integrated with `GET /api/documents/:id/analysis`.
+- Analysis view displays the document title, summary, analysis status, and obligations table.
 
 ## Tech Stack
 
@@ -18,6 +20,7 @@ Vite React frontend for Google authentication and the protected ReguMind AI dash
 - Tailwind CSS
 - Axios
 - React Router
+- React Icons
 - `@react-oauth/google`
 
 ## Installation
@@ -63,9 +66,17 @@ npm run preview
 ```text
 /login
 /dashboard
+/documents
+/upload
+/analysis
+/analysis/:id
+/risk
+/audit
+/evidence
+/chatbot
 ```
 
-`/dashboard` is protected and redirects to `/login` when no token is present.
+Protected routes redirect to `/login` when no JWT token is present in `localStorage`.
 
 ## Auth Flow
 
@@ -74,4 +85,34 @@ npm run preview
 3. Frontend sends the credential to `POST /api/auth/google`.
 4. Backend returns a JWT and user object.
 5. Frontend stores `token` and `user` in `localStorage`.
-6. Dashboard loads the profile from `GET /api/auth/profile`.
+6. Protected API calls send `Authorization: Bearer <token>`.
+
+## Document Workflow
+
+1. User uploads a PDF from `/upload`.
+2. Backend stores the document metadata and returns the document id.
+3. User can view uploaded documents from `/documents`.
+4. Each document includes a `View Analysis` link to `/analysis/:id`.
+5. The analysis page calls:
+
+```http
+GET /api/documents/:id/analysis
+Authorization: Bearer <jwt>
+```
+
+6. The page displays:
+
+- Document title.
+- Summary card.
+- Analysis status.
+- Obligations table with `Title`, `Department`, `Priority`, and `Deadline`.
+
+## Analysis States
+
+The analysis page handles:
+
+- No selected document at `/analysis`.
+- Loading state while fetching analysis.
+- Backend error responses such as `403` and `404`.
+- Empty summary or empty obligations.
+- Successful analysis data display.
