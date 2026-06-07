@@ -27,6 +27,15 @@ const toDocumentResponse = (document, options = {}) => ({
   updatedAt: document.updatedAt,
 });
 
+const toAnalysisResponse = (document) => ({
+  success: true,
+  documentId: document._id.toString(),
+  title: document.title,
+  summary: document.summary || '',
+  analysisStatus: document.analysisStatus,
+  obligations: document.obligations || [],
+});
+
 const normalizeFilePath = (filePath) => filePath.split(path.sep).join('/');
 
 const removeUploadedFile = async (filePath) => {
@@ -139,6 +148,44 @@ const getDocumentById = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch document',
+    });
+  }
+};
+
+const getDocumentAnalysis = async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid document id',
+    });
+  }
+
+  try {
+    const document = await Document.findById(id)
+      .select('title summary analysisStatus obligations uploadedBy')
+      .lean();
+
+    if (!document) {
+      return res.status(404).json({
+        success: false,
+        message: 'Document not found',
+      });
+    }
+
+    if (document.uploadedBy.toString() !== req.user.userId.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden',
+      });
+    }
+
+    return res.status(200).json(toAnalysisResponse(document));
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch document analysis',
     });
   }
 };
@@ -283,6 +330,7 @@ module.exports = {
   uploadDocument,
   getDocuments,
   getDocumentById,
+  getDocumentAnalysis,
   extractDocumentText,
   analyzeDocument,
 };
