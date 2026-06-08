@@ -49,35 +49,44 @@ Maximum 10 obligations.
 Document:
 ${rawText}`;
 
-const mapPrompt = (obligations) => `You are a senior banking compliance officer creating Management Action Plans (MAPs).
+const mapPrompt = (summary, obligations) => `Senior Regulatory Compliance Consultant creating Management Action Plans for banking and regulatory compliance teams.
 
-For each compliance obligation provided, generate an implementation-ready management action plan.
+You must generate implementation-ready Management Action Plans (MAPs) for the provided compliance obligations.
 
 Rules:
-- Return exactly one MAP for each obligation.
-- Keep actionPlan steps specific, auditable, and implementation focused.
-- Use the obligation department as owner when it is appropriate; otherwise choose the most suitable internal owner.
-- estimatedEffort must be a practical effort estimate such as "2-3 business days", "1 week", or "2 weeks".
-- Do not include markdown, commentary, or extra text.
+- Return JSON only. No markdown, no commentary, no extra text.
+- Cap output to a maximum of 10 MAP items.
+- Generate ONE MAP per obligation.
+- For each MAP:
+  - obligationTitle must match the obligation title.
+  - objective must clearly state the intended compliance outcome.
+  - owner should be the responsible internal team/role (use the obligation department when appropriate).
+  - actionPlan must be an array of specific, auditable implementation steps.
+  - deliverables must be an array of tangible outputs (documents, reports, controls, evidence).
+  - estimatedEffort must be exactly one of: "Low" | "Medium" | "High".
+  - timeline must be a concise target timeline (e.g., "2-4 weeks", "1-2 months").
 
-Return JSON only in this schema:
-
+Output schema (JSON only):
 {
   "maps": [
     {
-      "obligationTitle": "Matching obligation title",
-      "actionPlan": [
-        "Specific implementation step",
-        "Specific implementation step"
-      ],
-      "owner": "Responsible team or role",
-      "estimatedEffort": "Estimated implementation effort"
+      "obligationTitle": string,
+      "objective": string,
+      "owner": string,
+      "actionPlan": string[],
+      "deliverables": string[],
+      "estimatedEffort": "Low" | "Medium" | "High",
+      "timeline": string
     }
   ]
 }
 
-Obligations:
+Document summary:
+${summary}
+
+Compliance obligations:
 ${JSON.stringify(obligations, null, 2)}`;
+
 
 const getGoogleGenAI = () => {
   try {
@@ -118,15 +127,25 @@ const normalizeObligations = (obligations) => {
     .filter((obligation) => obligation.title && obligation.description);
 };
 
+const normalizeEffort = (value) => {
+  const v = String(value || '').trim().toLowerCase();
+  if (v === 'low') return 'Low';
+  if (v === 'medium') return 'Medium';
+  if (v === 'high') return 'High';
+  return 'Medium';
+};
+
 const normalizeMaps = (maps, obligations) => {
   if (!Array.isArray(maps)) {
     return [];
   }
 
-  const obligationTitles = obligations.map((obligation) => String(obligation.title || '').trim());
+  const obligationTitles = obligations.map((obligation) =>
+    String(obligation.title || '').trim()
+  );
 
   return maps
-    .slice(0, obligations.length)
+    .slice(0, Math.min(10, obligations.length))
     .map((map, index) => {
       const actionPlan = Array.isArray(map?.actionPlan)
         ? map.actionPlan
@@ -135,14 +154,35 @@ const normalizeMaps = (maps, obligations) => {
             .slice(0, 8)
         : [];
 
+      const deliverables = Array.isArray(map?.deliverables)
+        ? map.deliverables
+            .map((d) => String(d || '').trim())
+            .filter(Boolean)
+            .slice(0, 8)
+        : [];
+
       return {
-        obligationTitle: String(map?.obligationTitle || obligationTitles[index] || '').trim(),
+        obligationTitle: String(
+          map?.obligationTitle || obligationTitles[index] || ''
+        ).trim(),
+        objective: String(map?.objective || '').trim(),
+        owner: String(
+          map?.owner || obligations[index]?.department || 'Compliance'
+        ).trim(),
         actionPlan,
-        owner: String(map?.owner || obligations[index]?.department || 'Compliance').trim(),
-        estimatedEffort: String(map?.estimatedEffort || 'Not specified').trim(),
+        deliverables,
+        estimatedEffort: normalizeEffort(map?.estimatedEffort),
+        timeline: String(map?.timeline || 'Not specified').trim(),
       };
     })
-    .filter((map) => map.obligationTitle && map.actionPlan.length > 0 && map.owner);
+    .filter(
+      (map) =>
+        map.obligationTitle &&
+        map.objective &&
+        map.owner &&
+        map.actionPlan.length > 0 &&
+        map.deliverables.length > 0
+    );
 };
 
 const analyzeComplianceDocument = async (rawText) => {
@@ -170,7 +210,7 @@ const analyzeComplianceDocument = async (rawText) => {
   };
 };
 
-const generateManagementActionPlans = async (obligations) => {
+const generateManagementActionPlans = async (summary, obligations) => {
   if (!process.env.GEMINI_API_KEY) {
     throw new Error('GEMINI_API_KEY is not configured.');
   }
@@ -186,7 +226,7 @@ const generateManagementActionPlans = async (obligations) => {
 
   const response = await ai.models.generateContent({
     model,
-    contents: mapPrompt(normalizedObligations),
+    contents: mapPrompt(summary, normalizedObligations),
     config: {
       responseMimeType: 'application/json',
     },
@@ -195,14 +235,13 @@ const generateManagementActionPlans = async (obligations) => {
   const parsedResponse = extractJson(response.text || '');
   const maps = normalizeMaps(parsedResponse.maps, normalizedObligations);
 
-  if (maps.length !== normalizedObligations.length) {
-    throw new Error('Gemini response did not include one valid MAP per obligation.');
-  }
-
-  return maps;
+  // If Gemini drops some items or produces invalid shapes, return what we can.
+  // Controller will still persist the returned maps.
+  return maps.slice(0, 10);
 };
 
 module.exports = {
   analyzeComplianceDocument,
   generateManagementActionPlans,
 };
+

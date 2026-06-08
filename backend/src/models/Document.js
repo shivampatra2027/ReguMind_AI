@@ -7,20 +7,36 @@ const mapSchema = new mongoose.Schema(
       default: '',
       trim: true,
     },
+    objective: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    owner: {
+      type: String,
+      default: '',
+      trim: true,
+    },
     actionPlan: [
       {
         type: String,
         trim: true,
       },
     ],
-    owner: {
-      type: String,
-      default: '',
-      trim: true,
-    },
+    deliverables: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
     estimatedEffort: {
       type: String,
-      default: '',
+      default: 'Low',
+      trim: true,
+    },
+    timeline: {
+      type: String,
+      default: 'Not specified',
       trim: true,
     },
   },
@@ -110,6 +126,12 @@ const documentSchema = new mongoose.Schema(
       },
     ],
     maps: [mapSchema],
+    mapStatus: {
+      type: String,
+      enum: ['pending', 'processing', 'completed', 'failed'],
+      default: 'pending',
+      index: true,
+    },
     analysisStatus: {
       type: String,
       enum: ['pending', 'processing', 'completed', 'failed'],

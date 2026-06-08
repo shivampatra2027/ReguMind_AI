@@ -3,11 +3,6 @@ import axios from 'axios';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import WorkflowStepper from '../components/WorkflowStepper';
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
-
-const getErrorMessage = (error) =>
-  error.response?.data?.message || error.message || 'Failed to load analysis.';
-
 const formatValue = (value) => {
   if (!value) {
     return 'Not specified';
@@ -15,6 +10,14 @@ const formatValue = (value) => {
 
   return value;
 };
+
+
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+
+const getErrorMessage = (error) =>
+  error.response?.data?.message || error.message || 'Failed to load analysis.';
+
+
 
 const Analysis = () => {
   const { id } = useParams();
@@ -61,7 +64,7 @@ const Analysis = () => {
   }, [id, navigate]);
 
   const obligations = analysis?.obligations || [];
-
+  const maps = analysis?.maps || [];
   return (
     <main className="min-h-screen bg-[#f6f8fb] px-4 py-8">
       <section className="mx-auto max-w-6xl">
@@ -136,6 +139,7 @@ const Analysis = () => {
                 <h2 className="text-xl font-bold text-slate-950">Obligations</h2>
               </div>
 
+
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
                   <thead className="bg-slate-50">
@@ -177,6 +181,90 @@ const Analysis = () => {
                 </table>
               </div>
             </div>
+
+            <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+              <h2 className="text-xl font-bold text-slate-950">Management Action Plans</h2>
+              <p className="mt-2 text-sm text-slate-600">
+                Actionable compliance plans generated from extracted obligations.
+              </p>
+
+              <div className="mt-6 grid gap-4 lg:grid-cols-2">
+                {analysis?.mapStatus !== 'completed' ? (
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                    No management action plans generated yet.
+                  </div>
+                ) : maps.length === 0 ? (
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                    No management action plans found for this document.
+                  </div>
+                ) : (
+                  maps.map((map, index) => (
+                    <div
+                      key={`${map.obligationTitle || 'map'}-${index}`}
+                      className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+                    >
+                      <div className="flex flex-col gap-2">
+                        <div className="text-sm font-semibold uppercase text-cyan-700">
+                          MAP {index + 1}
+                        </div>
+                        <div className="text-lg font-bold text-slate-950">
+                          {map.obligationTitle || 'Untitled obligation'}
+                        </div>
+                        <div className="text-sm text-slate-700">
+                          <span className="font-semibold text-slate-900">Objective:</span>{' '}
+                          {map.objective || formatValue('Not specified')}
+                        </div>
+                        <div className="text-sm text-slate-700">
+                          <span className="font-semibold text-slate-900">Owner:</span>{' '}
+                          {map.owner || formatValue('Not specified')}
+                        </div>
+                      </div>
+
+                      <div className="mt-4">
+                        <div className="text-sm font-semibold text-slate-900">
+                          Action Plan Steps
+                        </div>
+                        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
+                          {(map.actionPlan || []).map((step, stepIndex) => (
+                            <li key={`${index}-${stepIndex}`}>{step}</li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div className="mt-4">
+                        <div className="text-sm font-semibold text-slate-900">
+                          Deliverables
+                        </div>
+                        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
+                          {(map.deliverables || []).map((d, dIndex) => (
+                            <li key={`${index}-d-${dIndex}`}>{d}</li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                        <div>
+                          <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                            Estimated Effort
+                          </div>
+                          <div className="mt-1 text-sm font-semibold text-slate-900">
+                            {map.estimatedEffort || 'Medium'}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                            Timeline
+                          </div>
+                          <div className="mt-1 text-sm font-semibold text-slate-900">
+                            {map.timeline || 'Not specified'}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
           </div>
         )}
       </section>
@@ -185,3 +273,4 @@ const Analysis = () => {
 };
 
 export default Analysis;
+

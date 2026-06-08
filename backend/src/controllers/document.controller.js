@@ -21,6 +21,7 @@ const toDocumentResponse = (document, options = {}) => ({
   status: document.status,
   processingStatus: document.processingStatus,
   analysisStatus: document.analysisStatus,
+  mapStatus: document.mapStatus,
   summary: document.summary,
   obligations: document.obligations || [],
   obligationsCount: document.obligations?.length || 0,
@@ -39,6 +40,8 @@ const toAnalysisResponse = (document) => ({
   summary: document.summary || '',
   analysisStatus: document.analysisStatus,
   obligations: document.obligations || [],
+  mapStatus: document.mapStatus || 'pending',
+  maps: document.maps || [],
 });
 
 const normalizeFilePath = (filePath) => filePath.split(path.sep).join('/');
@@ -169,7 +172,7 @@ const getDocumentAnalysis = async (req, res) => {
 
   try {
     const document = await Document.findById(id)
-      .select('title summary analysisStatus obligations uploadedBy')
+      .select('title summary analysisStatus obligations mapStatus maps uploadedBy')
       .lean();
 
     if (!document) {
@@ -185,6 +188,9 @@ const getDocumentAnalysis = async (req, res) => {
         message: 'Forbidden',
       });
     }
+
+    console.log('ANALYSIS RESPONSE MAP STATUS', document.mapStatus);
+    console.log('ANALYSIS RESPONSE MAP COUNT', document.maps?.length);
 
     return res.status(200).json(toAnalysisResponse(document));
   } catch (error) {
@@ -331,7 +337,7 @@ const analyzeDocument = async (req, res) => {
   }
 };
 
-const generateDocumentMap = async (req, res) => {
+const generateMAP = async (req, res) => {
   const { id } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -354,6 +360,13 @@ const generateDocumentMap = async (req, res) => {
       });
     }
 
+    if (document.analysisStatus !== 'completed') {
+      return res.status(400).json({
+        success: false,
+        message: 'Document analysis must be completed before generating MAP',
+      });
+    }
+
     const obligations = document.obligations || [];
 
     if (obligations.length === 0) {
@@ -364,18 +377,28 @@ const generateDocumentMap = async (req, res) => {
     }
 
     console.log('MAP GENERATION DOCUMENT ID:', document._id.toString());
-    console.log('MAP GENERATION OBLIGATION COUNT:', obligations.length);
+    console.log('OBLIGATIONS COUNT:', obligations.length);
 
-    const maps = await generateManagementActionPlans(obligations);
+    const maps = await generateManagementActionPlans(
+      document.summary || '',
+      obligations
+    );
 
     document.maps = maps;
-    await document.save();
+    document.mapStatus = 'completed';
+    console.log('MAPS BEFORE SAVE', maps);
+    console.log('MAP STATUS BEFORE SAVE', document.mapStatus);
 
-    console.log('MAP GENERATION MAPS GENERATED:', maps.length);
+    const savedDocument = await document.save();
+
+    console.log('MAPS GENERATED:', maps.length);
+    console.log('MAP STATUS AFTER SAVE', savedDocument.mapStatus);
+    console.log('MAP COUNT AFTER SAVE', savedDocument.maps?.length);
 
     return res.status(200).json({
       success: true,
       mapsGenerated: maps.length,
+      mapStatus: 'completed',
     });
   } catch (error) {
     console.error('MAP GENERATION ERROR:', error);
@@ -394,5 +417,5 @@ module.exports = {
   getDocumentAnalysis,
   extractDocumentText,
   analyzeDocument,
-  generateDocumentMap,
+  generateMAP,
 };

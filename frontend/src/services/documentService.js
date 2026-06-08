@@ -35,3 +35,12 @@ export const analyzeDocument = async (documentId) => {
 
   return response.data;
 };
+
+export const generateMAP = async (documentId) => {
+  const response = await api.post(`/documents/${documentId}/generate-map`, null, {
+    headers: getAuthHeaders(),
+  });
+
+  return response.data;
+};
+
