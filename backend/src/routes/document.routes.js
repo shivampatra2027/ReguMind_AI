@@ -9,6 +9,7 @@ const {
   extractDocumentText,
   analyzeDocument,
   generateMAP,
+  generateRiskScore,
 } = require('../controllers/document.controller');
 
 const { upload } = require('../config/multer');
@@ -46,6 +47,7 @@ router.get('/', authMiddleware, getDocuments);
 router.post('/:id/extract', authMiddleware, extractDocumentText);
 router.post('/:id/analyze', authMiddleware, analyzeDocument);
 router.post('/:id/generate-map', authMiddleware, generateMAP);
+router.post('/:id/generate-risk', authMiddleware, generateRiskScore);
 
 router.get('/:id/analysis', authMiddleware, getDocumentAnalysis);
 router.get('/:id', authMiddleware, getDocumentById);

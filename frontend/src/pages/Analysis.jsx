@@ -17,6 +17,36 @@ const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/a
 const getErrorMessage = (error) =>
   error.response?.data?.message || error.message || 'Failed to load analysis.';
 
+const getRiskBand = (score) => {
+  const numericScore = Number(score) || 0;
+
+  if (numericScore <= 30) {
+    return {
+      label: 'Low',
+      className: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+    };
+  }
+
+  if (numericScore <= 60) {
+    return {
+      label: 'Medium',
+      className: 'border-amber-200 bg-amber-50 text-amber-700',
+    };
+  }
+
+  if (numericScore <= 80) {
+    return {
+      label: 'High',
+      className: 'border-orange-200 bg-orange-50 text-orange-700',
+    };
+  }
+
+  return {
+    label: 'Critical',
+    className: 'border-red-200 bg-red-50 text-red-700',
+  };
+};
+
 
 
 const Analysis = () => {
@@ -65,6 +95,8 @@ const Analysis = () => {
 
   const obligations = analysis?.obligations || [];
   const maps = analysis?.maps || [];
+  const risks = analysis?.risks || [];
+  const overallRiskBand = getRiskBand(analysis?.overallRiskScore);
   return (
     <main className="min-h-screen bg-[#f6f8fb] px-4 py-8">
       <section className="mx-auto max-w-6xl">
@@ -265,6 +297,82 @@ const Analysis = () => {
                 )}
               </div>
             </div>
+
+            <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-950">Risk Assessment</h2>
+                  <p className="mt-2 text-sm text-slate-600">
+                    Compliance risk scoring generated from obligations and Management Action Plans.
+                  </p>
+                </div>
+
+                <div
+                  className={`inline-flex w-fit flex-col rounded-lg border px-5 py-3 ${overallRiskBand.className}`}
+                >
+                  <span className="text-xs font-semibold uppercase">Overall Risk Score</span>
+                  <span className="mt-1 text-3xl font-bold">
+                    {Number(analysis?.overallRiskScore) || 0}
+                  </span>
+                  <span className="text-sm font-semibold">{overallRiskBand.label}</span>
+                </div>
+              </div>
+
+              <div className="mt-6 grid gap-4 lg:grid-cols-2">
+                {analysis?.riskStatus !== 'completed' ? (
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                    No risk assessment generated yet.
+                  </div>
+                ) : risks.length === 0 ? (
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                    No risk assessment items found for this document.
+                  </div>
+                ) : (
+                  risks.map((risk, index) => {
+                    const riskBand = getRiskBand(risk.riskScore);
+
+                    return (
+                      <div
+                        key={`${risk.obligationTitle || 'risk'}-${index}`}
+                        className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+                      >
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                          <div>
+                            <div className="text-sm font-semibold uppercase text-cyan-700">
+                              Risk {index + 1}
+                            </div>
+                            <div className="mt-1 text-lg font-bold text-slate-950">
+                              {risk.obligationTitle || 'Untitled obligation'}
+                            </div>
+                          </div>
+
+                          <div
+                            className={`inline-flex w-fit rounded-md border px-3 py-1 text-sm font-semibold ${riskBand.className}`}
+                          >
+                            {risk.riskScore || 0} - {risk.riskLevel || riskBand.label}
+                          </div>
+                        </div>
+
+                        <div className="mt-4 space-y-3 text-sm text-slate-700">
+                          <div>
+                            <span className="font-semibold text-slate-900">Reason:</span>{' '}
+                            {risk.reason || 'Not specified'}
+                          </div>
+                          <div>
+                            <span className="font-semibold text-slate-900">Impact:</span>{' '}
+                            {risk.impact || 'Not specified'}
+                          </div>
+                          <div>
+                            <span className="font-semibold text-slate-900">Mitigation:</span>{' '}
+                            {risk.mitigation || 'Not specified'}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
           </div>
         )}
       </section>
@@ -273,4 +381,3 @@ const Analysis = () => {
 };
 
 export default Analysis;
-

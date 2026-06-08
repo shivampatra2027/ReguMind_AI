@@ -44,3 +44,10 @@ export const generateMAP = async (documentId) => {
   return response.data;
 };
 
+export const generateRisk = async (documentId) => {
+  const response = await api.post(`/documents/${documentId}/generate-risk`, null, {
+    headers: getAuthHeaders(),
+  });
+
+  return response.data;
+};

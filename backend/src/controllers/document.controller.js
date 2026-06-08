@@ -6,6 +6,7 @@ const { extractTextFromPDF } = require('../services/pdf.service');
 const {
   analyzeComplianceDocument,
   generateManagementActionPlans,
+  generateRiskAssessment,
 } = require('../services/gemini.service');
 
 const backendRoot = path.resolve(__dirname, '..', '..');
@@ -22,11 +23,15 @@ const toDocumentResponse = (document, options = {}) => ({
   processingStatus: document.processingStatus,
   analysisStatus: document.analysisStatus,
   mapStatus: document.mapStatus,
+  riskStatus: document.riskStatus || 'pending',
   summary: document.summary,
   obligations: document.obligations || [],
   obligationsCount: document.obligations?.length || 0,
   maps: document.maps || [],
   mapsCount: document.maps?.length || 0,
+  risks: document.risks || [],
+  risksCount: document.risks?.length || 0,
+  overallRiskScore: document.overallRiskScore || 0,
   rawTextLength: document.rawText?.length || 0,
   ...(options.includeRawText ? { rawText: document.rawText || '' } : {}),
   createdAt: document.createdAt,
@@ -42,6 +47,9 @@ const toAnalysisResponse = (document) => ({
   obligations: document.obligations || [],
   mapStatus: document.mapStatus || 'pending',
   maps: document.maps || [],
+  riskStatus: document.riskStatus || 'pending',
+  risks: document.risks || [],
+  overallRiskScore: document.overallRiskScore || 0,
 });
 
 const normalizeFilePath = (filePath) => filePath.split(path.sep).join('/');
@@ -172,7 +180,9 @@ const getDocumentAnalysis = async (req, res) => {
 
   try {
     const document = await Document.findById(id)
-      .select('title summary analysisStatus obligations mapStatus maps uploadedBy')
+      .select(
+        'title summary analysisStatus obligations mapStatus maps riskStatus risks overallRiskScore uploadedBy'
+      )
       .lean();
 
     if (!document) {
@@ -410,6 +420,93 @@ const generateMAP = async (req, res) => {
   }
 };
 
+const generateRiskScore = async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid document id',
+    });
+  }
+
+  let document;
+
+  try {
+    document = await Document.findOne({
+      _id: id,
+      uploadedBy: req.user.userId,
+    });
+
+    if (!document) {
+      return res.status(404).json({
+        success: false,
+        message: 'Document not found',
+      });
+    }
+
+    if (document.analysisStatus !== 'completed') {
+      return res.status(400).json({
+        success: false,
+        message: 'Document analysis must be completed before generating risk score',
+      });
+    }
+
+    const obligations = document.obligations || [];
+    const maps = document.maps || [];
+
+    if (obligations.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No obligations found for this document',
+      });
+    }
+
+    if (maps.length === 0 || document.mapStatus !== 'completed') {
+      return res.status(400).json({
+        success: false,
+        message: 'Management Action Plan must be completed before generating risk score',
+      });
+    }
+
+    document.riskStatus = 'processing';
+    await document.save();
+
+    console.log('RISK GENERATION DOCUMENT ID:', document._id.toString());
+    console.log('OBLIGATIONS COUNT:', obligations.length);
+
+    const riskAssessment = await generateRiskAssessment(obligations, maps);
+
+    document.risks = riskAssessment.risks;
+    document.overallRiskScore = riskAssessment.overallRiskScore;
+    document.riskStatus = 'completed';
+    await document.save();
+
+    console.log('RISKS GENERATED:', document.risks.length);
+    console.log('OVERALL RISK SCORE:', document.overallRiskScore);
+
+    return res.status(200).json({
+      success: true,
+      overallRiskScore: document.overallRiskScore,
+      risksGenerated: document.risks.length,
+    });
+  } catch (error) {
+    console.error('RISK GENERATION ERROR:', error);
+
+    if (document) {
+      document.riskStatus = 'failed';
+      await document.save().catch((saveError) => {
+        console.error('RISK GENERATION STATUS UPDATE ERROR:', saveError);
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to generate risk score',
+    });
+  }
+};
+
 module.exports = {
   uploadDocument,
   getDocuments,
@@ -418,4 +515,5 @@ module.exports = {
   extractDocumentText,
   analyzeDocument,
   generateMAP,
+  generateRiskScore,
 };

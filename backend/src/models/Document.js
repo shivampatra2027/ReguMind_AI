@@ -43,6 +43,43 @@ const mapSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const riskSchema = new mongoose.Schema(
+  {
+    obligationTitle: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    riskScore: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
+    },
+    riskLevel: {
+      type: String,
+      enum: ['Low', 'Medium', 'High', 'Critical'],
+      default: 'Low',
+    },
+    reason: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    impact: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    mitigation: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+  },
+  { _id: false }
+);
+
 const documentSchema = new mongoose.Schema(
   {
     title: {
@@ -131,6 +168,19 @@ const documentSchema = new mongoose.Schema(
       enum: ['pending', 'processing', 'completed', 'failed'],
       default: 'pending',
       index: true,
+    },
+    riskStatus: {
+      type: String,
+      enum: ['pending', 'processing', 'completed', 'failed'],
+      default: 'pending',
+      index: true,
+    },
+    risks: [riskSchema],
+    overallRiskScore: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
     },
     analysisStatus: {
       type: String,

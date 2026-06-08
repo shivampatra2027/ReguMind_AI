@@ -87,6 +87,47 @@ ${summary}
 Compliance obligations:
 ${JSON.stringify(obligations, null, 2)}`;
 
+const riskPrompt = (obligations, maps) => `You are a Senior Banking Compliance Risk Officer.
+
+Generate a compliance risk assessment for every extracted obligation using the related Management Action Plan context.
+
+Rules:
+- Return JSON only. No markdown, no commentary, no extra text.
+- Generate ONE risk item per obligation.
+- riskScore must be a number from 0 to 100.
+- riskLevel must be exactly one of: "Low" | "Medium" | "High" | "Critical".
+- Regulatory filings must receive higher risk.
+- Reporting obligations must receive higher risk.
+- Missing or unspecified deadlines must receive higher risk.
+- Administrative actions should receive lower risk.
+
+Score bands:
+- 0-30: Low
+- 31-60: Medium
+- 61-80: High
+- 81-100: Critical
+
+Output schema (JSON only):
+{
+  "risks": [
+    {
+      "obligationTitle": string,
+      "riskScore": number,
+      "riskLevel": "Low" | "Medium" | "High" | "Critical",
+      "reason": string,
+      "impact": string,
+      "mitigation": string
+    }
+  ],
+  "overallRiskScore": number
+}
+
+Compliance obligations:
+${JSON.stringify(obligations, null, 2)}
+
+Management Action Plans:
+${JSON.stringify(maps, null, 2)}`;
+
 
 const getGoogleGenAI = () => {
   try {
@@ -185,6 +226,78 @@ const normalizeMaps = (maps, obligations) => {
     );
 };
 
+const getRiskLevelFromScore = (score) => {
+  if (score <= 30) return 'Low';
+  if (score <= 60) return 'Medium';
+  if (score <= 80) return 'High';
+  return 'Critical';
+};
+
+const normalizeRiskLevel = (value, score) => {
+  const v = String(value || '').trim().toLowerCase();
+  if (v === 'low') return 'Low';
+  if (v === 'medium') return 'Medium';
+  if (v === 'high') return 'High';
+  if (v === 'critical') return 'Critical';
+  return getRiskLevelFromScore(score);
+};
+
+const normalizeRiskScore = (value) => {
+  const score = Number(value);
+
+  if (!Number.isFinite(score)) {
+    return 0;
+  }
+
+  return Math.max(0, Math.min(100, Math.round(score)));
+};
+
+const normalizeRisks = (risks, obligations) => {
+  if (!Array.isArray(risks)) {
+    return [];
+  }
+
+  const obligationTitles = obligations.map((obligation) =>
+    String(obligation.title || '').trim()
+  );
+
+  return risks
+    .slice(0, Math.min(10, obligations.length))
+    .map((risk, index) => {
+      const riskScore = normalizeRiskScore(risk?.riskScore);
+
+      return {
+        obligationTitle: String(
+          risk?.obligationTitle || obligationTitles[index] || ''
+        ).trim(),
+        riskScore,
+        riskLevel: normalizeRiskLevel(risk?.riskLevel, riskScore),
+        reason: String(risk?.reason || '').trim(),
+        impact: String(risk?.impact || '').trim(),
+        mitigation: String(risk?.mitigation || '').trim(),
+      };
+    })
+    .filter(
+      (risk) =>
+        risk.obligationTitle &&
+        risk.reason &&
+        risk.impact &&
+        risk.mitigation
+    );
+};
+
+const calculateOverallRiskScore = (risks, fallbackScore) => {
+  if (risks.length === 0) {
+    return normalizeRiskScore(fallbackScore);
+  }
+
+  const average =
+    risks.reduce((total, risk) => total + normalizeRiskScore(risk.riskScore), 0) /
+    risks.length;
+
+  return normalizeRiskScore(average);
+};
+
 const analyzeComplianceDocument = async (rawText) => {
   if (!process.env.GEMINI_API_KEY) {
     throw new Error('GEMINI_API_KEY is not configured.');
@@ -240,8 +353,46 @@ const generateManagementActionPlans = async (summary, obligations) => {
   return maps.slice(0, 10);
 };
 
+const generateRiskAssessment = async (obligations, maps) => {
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error('GEMINI_API_KEY is not configured.');
+  }
+
+  const normalizedObligations = normalizeObligations(obligations);
+  const normalizedMaps = normalizeMaps(maps, normalizedObligations);
+
+  if (normalizedObligations.length === 0 || normalizedMaps.length === 0) {
+    return {
+      risks: [],
+      overallRiskScore: 0,
+    };
+  }
+
+  const GoogleGenAI = getGoogleGenAI();
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+  const response = await ai.models.generateContent({
+    model,
+    contents: riskPrompt(normalizedObligations, normalizedMaps),
+    config: {
+      responseMimeType: 'application/json',
+    },
+  });
+
+  const parsedResponse = extractJson(response.text || '');
+  const risks = normalizeRisks(parsedResponse.risks, normalizedObligations);
+
+  return {
+    risks,
+    overallRiskScore: calculateOverallRiskScore(
+      risks,
+      parsedResponse.overallRiskScore
+    ),
+  };
+};
+
 module.exports = {
   analyzeComplianceDocument,
   generateManagementActionPlans,
+  generateRiskAssessment,
 };
-
