@@ -8,6 +8,7 @@ const {
   getDocumentAnalysis,
   extractDocumentText,
   analyzeDocument,
+  generateDocumentMap,
 } = require('../controllers/document.controller');
 
 const { upload } = require('../config/multer');
@@ -44,6 +45,7 @@ router.post('/upload', authMiddleware, handleUpload, uploadDocument);
 router.get('/', authMiddleware, getDocuments);
 router.post('/:id/extract', authMiddleware, extractDocumentText);
 router.post('/:id/analyze', authMiddleware, analyzeDocument);
+router.post('/:id/generate-map', authMiddleware, generateDocumentMap);
 router.get('/:id/analysis', authMiddleware, getDocumentAnalysis);
 router.get('/:id', authMiddleware, getDocumentById);
 

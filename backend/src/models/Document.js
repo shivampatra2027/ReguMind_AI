@@ -1,5 +1,32 @@
 const mongoose = require('mongoose');
 
+const mapSchema = new mongoose.Schema(
+  {
+    obligationTitle: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    actionPlan: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
+    owner: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    estimatedEffort: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+  },
+  { _id: false }
+);
+
 const documentSchema = new mongoose.Schema(
   {
     title: {
@@ -82,6 +109,7 @@ const documentSchema = new mongoose.Schema(
         },
       },
     ],
+    maps: [mapSchema],
     analysisStatus: {
       type: String,
       enum: ['pending', 'processing', 'completed', 'failed'],

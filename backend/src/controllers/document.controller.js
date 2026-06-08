@@ -3,7 +3,10 @@ const path = require('path');
 const mongoose = require('mongoose');
 const Document = require('../models/Document');
 const { extractTextFromPDF } = require('../services/pdf.service');
-const { analyzeComplianceDocument } = require('../services/gemini.service');
+const {
+  analyzeComplianceDocument,
+  generateManagementActionPlans,
+} = require('../services/gemini.service');
 
 const backendRoot = path.resolve(__dirname, '..', '..');
 
@@ -21,6 +24,8 @@ const toDocumentResponse = (document, options = {}) => ({
   summary: document.summary,
   obligations: document.obligations || [],
   obligationsCount: document.obligations?.length || 0,
+  maps: document.maps || [],
+  mapsCount: document.maps?.length || 0,
   rawTextLength: document.rawText?.length || 0,
   ...(options.includeRawText ? { rawText: document.rawText || '' } : {}),
   createdAt: document.createdAt,
@@ -326,6 +331,62 @@ const analyzeDocument = async (req, res) => {
   }
 };
 
+const generateDocumentMap = async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid document id',
+    });
+  }
+
+  try {
+    const document = await Document.findOne({
+      _id: id,
+      uploadedBy: req.user.userId,
+    });
+
+    if (!document) {
+      return res.status(404).json({
+        success: false,
+        message: 'Document not found',
+      });
+    }
+
+    const obligations = document.obligations || [];
+
+    if (obligations.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No obligations found for this document',
+      });
+    }
+
+    console.log('MAP GENERATION DOCUMENT ID:', document._id.toString());
+    console.log('MAP GENERATION OBLIGATION COUNT:', obligations.length);
+
+    const maps = await generateManagementActionPlans(obligations);
+
+    document.maps = maps;
+    await document.save();
+
+    console.log('MAP GENERATION MAPS GENERATED:', maps.length);
+
+    return res.status(200).json({
+      success: true,
+      mapsGenerated: maps.length,
+    });
+  } catch (error) {
+    console.error('MAP GENERATION ERROR:', error);
+
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to generate management action plan',
+    });
+  }
+};
+
 module.exports = {
   uploadDocument,
   getDocuments,
@@ -333,4 +394,5 @@ module.exports = {
   getDocumentAnalysis,
   extractDocumentText,
   analyzeDocument,
+  generateDocumentMap,
 };

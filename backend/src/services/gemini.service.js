@@ -49,6 +49,36 @@ Maximum 10 obligations.
 Document:
 ${rawText}`;
 
+const mapPrompt = (obligations) => `You are a senior banking compliance officer creating Management Action Plans (MAPs).
+
+For each compliance obligation provided, generate an implementation-ready management action plan.
+
+Rules:
+- Return exactly one MAP for each obligation.
+- Keep actionPlan steps specific, auditable, and implementation focused.
+- Use the obligation department as owner when it is appropriate; otherwise choose the most suitable internal owner.
+- estimatedEffort must be a practical effort estimate such as "2-3 business days", "1 week", or "2 weeks".
+- Do not include markdown, commentary, or extra text.
+
+Return JSON only in this schema:
+
+{
+  "maps": [
+    {
+      "obligationTitle": "Matching obligation title",
+      "actionPlan": [
+        "Specific implementation step",
+        "Specific implementation step"
+      ],
+      "owner": "Responsible team or role",
+      "estimatedEffort": "Estimated implementation effort"
+    }
+  ]
+}
+
+Obligations:
+${JSON.stringify(obligations, null, 2)}`;
+
 const getGoogleGenAI = () => {
   try {
     return require('@google/genai').GoogleGenAI;
@@ -88,6 +118,33 @@ const normalizeObligations = (obligations) => {
     .filter((obligation) => obligation.title && obligation.description);
 };
 
+const normalizeMaps = (maps, obligations) => {
+  if (!Array.isArray(maps)) {
+    return [];
+  }
+
+  const obligationTitles = obligations.map((obligation) => String(obligation.title || '').trim());
+
+  return maps
+    .slice(0, obligations.length)
+    .map((map, index) => {
+      const actionPlan = Array.isArray(map?.actionPlan)
+        ? map.actionPlan
+            .map((step) => String(step || '').trim())
+            .filter(Boolean)
+            .slice(0, 8)
+        : [];
+
+      return {
+        obligationTitle: String(map?.obligationTitle || obligationTitles[index] || '').trim(),
+        actionPlan,
+        owner: String(map?.owner || obligations[index]?.department || 'Compliance').trim(),
+        estimatedEffort: String(map?.estimatedEffort || 'Not specified').trim(),
+      };
+    })
+    .filter((map) => map.obligationTitle && map.actionPlan.length > 0 && map.owner);
+};
+
 const analyzeComplianceDocument = async (rawText) => {
   if (!process.env.GEMINI_API_KEY) {
     throw new Error('GEMINI_API_KEY is not configured.');
@@ -113,6 +170,39 @@ const analyzeComplianceDocument = async (rawText) => {
   };
 };
 
+const generateManagementActionPlans = async (obligations) => {
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error('GEMINI_API_KEY is not configured.');
+  }
+
+  const normalizedObligations = normalizeObligations(obligations);
+
+  if (normalizedObligations.length === 0) {
+    return [];
+  }
+
+  const GoogleGenAI = getGoogleGenAI();
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+  const response = await ai.models.generateContent({
+    model,
+    contents: mapPrompt(normalizedObligations),
+    config: {
+      responseMimeType: 'application/json',
+    },
+  });
+
+  const parsedResponse = extractJson(response.text || '');
+  const maps = normalizeMaps(parsedResponse.maps, normalizedObligations);
+
+  if (maps.length !== normalizedObligations.length) {
+    throw new Error('Gemini response did not include one valid MAP per obligation.');
+  }
+
+  return maps;
+};
+
 module.exports = {
   analyzeComplianceDocument,
+  generateManagementActionPlans,
 };
