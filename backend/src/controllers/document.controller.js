@@ -7,6 +7,7 @@ const {
   analyzeComplianceDocument,
   generateManagementActionPlans,
   generateRiskAssessment,
+  validateComplianceCompletion,
 } = require('../services/gemini.service');
 
 const backendRoot = path.resolve(__dirname, '..', '..');
@@ -50,6 +51,15 @@ const toAnalysisResponse = (document) => ({
   riskStatus: document.riskStatus || 'pending',
   risks: document.risks || [],
   overallRiskScore: document.overallRiskScore || 0,
+  evidenceFiles: (document.evidenceFiles || []).map((f) => ({
+    fileName: f.fileName || '',
+    uploadedAt: f.uploadedAt || null,
+    fileType: f.fileType || '',
+    extractionStatus: f.extractionStatus || 'pending',
+    preview: f.extractedText ? String(f.extractedText).slice(0, 500) : '',
+  })),
+  validationStatus: document.validationStatus || 'pending',
+  validationResult: document.validationResult || { status: '', confidence: 0, reason: '' },
 });
 
 const normalizeFilePath = (filePath) => filePath.split(path.sep).join('/');
@@ -507,6 +517,197 @@ const generateRiskScore = async (req, res) => {
   }
 };
 
+const uploadEvidence = async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ success: false, message: 'Invalid document id' });
+  }
+
+  let document;
+  try {
+    document = await Document.findOne({ _id: id, uploadedBy: req.user.userId });
+
+    if (!document) {
+      return res.status(404).json({ success: false, message: 'Document not found' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'Evidence file is required' });
+    }
+
+    const absolutePath = path.resolve(backendRoot, normalizeFilePath(req.file.path));
+    const fileName = req.file.originalname;
+    const filePathRel = normalizeFilePath(req.file.path);
+    const ext = path.extname(fileName || '').toLowerCase();
+    const mime = req.file.mimetype || '';
+
+    let extractedText = '';
+    let extractionStatus = 'failed';
+
+    try {
+      if (ext === '.txt' || mime === 'text/plain') {
+        // Read text file
+        const buf = await fs.readFile(absolutePath, 'utf8');
+        extractedText = String(buf || '').trim();
+      } else {
+        // Fall back to PDF extraction for other types (pdf expected)
+        extractedText = await extractTextFromPDF(absolutePath);
+      }
+    } catch (err) {
+      console.error('EVIDENCE EXTRACTION ERROR:', err);
+      extractedText = '';
+    }
+
+    console.log('EVIDENCE TEXT LENGTH:', (extractedText || '').length);
+
+    if (extractedText && String(extractedText).trim().length >= 50) {
+      extractionStatus = 'success';
+      console.log('EVIDENCE EXTRACTION SUCCESS:', fileName);
+    } else {
+      extractionStatus = 'failed';
+      console.log('EVIDENCE EXTRACTION FAILED:', fileName);
+    }
+
+    const evidenceEntry = {
+      fileName,
+      filePath: filePathRel,
+      uploadedAt: new Date(),
+      fileType: mime || ext.replace('.', ''),
+      extractedText: extractedText || '',
+      extractionStatus,
+    };
+
+    // Keep evidenceFiles as additive history
+    document.evidenceFiles = Array.isArray(document.evidenceFiles)
+      ? [...document.evidenceFiles, evidenceEntry]
+      : [evidenceEntry];
+
+    await document.save();
+
+    if (extractionStatus === 'failed') {
+      return res.status(400).json({
+        success: false,
+        message: 'Evidence contains insufficient readable text.',
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      evidenceFilesCount: document.evidenceFiles.length,
+    });
+  } catch (error) {
+    console.error('UPLOAD EVIDENCE ERROR:', error);
+
+    return res.status(500).json({ success: false, message: 'Failed to upload evidence' });
+  }
+};
+
+const validateDocumentCompliance = async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ success: false, message: 'Invalid document id' });
+  }
+
+  let document;
+
+  try {
+    document = await Document.findOne({ _id: id, uploadedBy: req.user.userId });
+
+    if (!document) {
+      return res.status(404).json({ success: false, message: 'Document not found' });
+    }
+
+    // Validation rules (per AGENT.md)
+    if (document.mapStatus !== 'completed') {
+      return res.status(400).json({
+        success: false,
+        message: 'Management Action Plan must be completed before validation',
+      });
+    }
+
+
+    const evidenceFiles = Array.isArray(document.evidenceFiles)
+      ? document.evidenceFiles
+      : [];
+
+    if (evidenceFiles.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'At least one evidence file must be uploaded before validation',
+      });
+    }
+
+    // Aggregate extracted text from stored evidence entries
+    const evidenceTextChunks = [];
+    for (const ev of evidenceFiles) {
+      if (ev && ev.extractedText) {
+        evidenceTextChunks.push(String(ev.extractedText));
+      }
+    }
+
+    const evidenceText = evidenceTextChunks.join('\n\n');
+
+    // Guardrail: do not call Gemini if extracted text is insufficient
+    if (!evidenceText || evidenceText.trim().length < 50) {
+      document.validationStatus = 'incomplete';
+      document.validationResult = {
+        status: 'incomplete',
+        confidence: 0,
+        reason: 'Evidence contains insufficient readable text.',
+      };
+      await document.save();
+
+      console.log('VALIDATION ABORTED - INSUFFICIENT EVIDENCE TEXT LENGTH:', (evidenceText || '').length);
+
+      return res.status(400).json({
+        success: false,
+        message: 'Evidence contains insufficient readable text.',
+      });
+    }
+
+    document.validationStatus = 'processing';
+    await document.save();
+
+    const { status, confidence, reason } = await validateComplianceCompletion(
+      document.maps || [],
+      evidenceText
+    );
+
+    document.validationStatus = status || 'incomplete';
+    document.validationResult = {
+      status: status || 'incomplete',
+      confidence: typeof confidence === 'number' ? confidence : 0,
+      reason: reason || '',
+    };
+
+    await document.save();
+
+    console.log('VALIDATION DOC ID:', document._id.toString());
+    console.log('EVIDENCE FILE COUNT:', evidenceFiles.length);
+    console.log('VALIDATION STATUS:', document.validationStatus);
+    console.log('CONFIDENCE SCORE:', document.validationResult?.confidence);
+
+    return res.status(200).json({
+      success: true,
+      validationStatus: document.validationStatus,
+      validationResult: document.validationResult,
+    });
+  } catch (error) {
+    console.error('VALIDATION ERROR:', error);
+
+    if (document) {
+      document.validationStatus = 'failed';
+      await document.save().catch((saveError) => {
+        console.error('VALIDATION STATUS UPDATE ERROR:', saveError);
+      });
+    }
+
+    return res.status(500).json({ success: false, message: 'Failed to validate compliance' });
+  }
+};
+
 module.exports = {
   uploadDocument,
   getDocuments,
@@ -516,4 +717,6 @@ module.exports = {
   analyzeDocument,
   generateMAP,
   generateRiskScore,
+  uploadEvidence,
+  validateDocumentCompliance,
 };

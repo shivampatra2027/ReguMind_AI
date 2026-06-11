@@ -51,3 +51,25 @@ export const generateRisk = async (documentId) => {
 
   return response.data;
 };
+
+export const uploadEvidence = async (documentId, file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await api.post(`/documents/${documentId}/upload-evidence`, formData, {
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+
+  return response.data;
+};
+
+export const validateCompliance = async (documentId) => {
+  const response = await api.post(`/documents/${documentId}/validate`, null, {
+    headers: getAuthHeaders(),
+  });
+
+  return response.data;
+};

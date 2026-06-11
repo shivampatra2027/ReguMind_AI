@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import WorkflowStepper from '../components/WorkflowStepper';
+import Toast from '../components/Toast';
+import { uploadEvidence, validateCompliance } from '../services/documentService';
 
 const formatValue = (value) => {
   if (!value) {
@@ -55,6 +57,8 @@ const Analysis = () => {
   const [analysis, setAnalysis] = useState(null);
   const [isLoading, setIsLoading] = useState(Boolean(id));
   const [error, setError] = useState('');
+  const [toast, setToast] = useState(null);
+  const [actionInProgress, setActionInProgress] = useState(false);
 
   useEffect(() => {
     const fetchAnalysis = async () => {
@@ -97,6 +101,137 @@ const Analysis = () => {
   const maps = analysis?.maps || [];
   const risks = analysis?.risks || [];
   const overallRiskBand = getRiskBand(analysis?.overallRiskScore);
+
+  const validationStatus = analysis?.validationStatus || '';
+  const validationResult = analysis?.validationResult || null;
+
+  // const validationBand = (() => {
+  //   const s = String(validationStatus || '').toLowerCase();
+  //   if (s === 'completed') {
+  //     return {
+  //       className: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+  //       label: 'Completed',
+  //     };
+  //   }
+  //   if (s === 'processing') {
+  //     return {
+  //       className: 'border-cyan-200 bg-cyan-50 text-cyan-700',
+  //       label: 'Processing',
+  //     };
+  //   }
+  //   if (s === 'failed') {
+  //     return {
+  //       className: 'border-red-200 bg-red-50 text-red-700',
+  //       label: 'Failed',
+  //     };
+  //   }
+  //   return {
+  //     className: 'border-slate-200 bg-slate-50 text-slate-700',
+  //     label: 'Pending',
+  //   };
+  // })();
+  const validationBand = (() => {
+    const s = String(validationStatus || '').toLowerCase();
+
+    if (s === 'completed') {
+      return {
+        className: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+        label: 'Completed',
+      };
+    }
+
+    if (s === 'partially_completed') {
+      return {
+        className: 'border-amber-200 bg-amber-50 text-amber-700',
+        label: 'Partially Completed',
+      };
+    }
+
+    if (s === 'incomplete') {
+      return {
+        className: 'border-red-200 bg-red-50 text-red-700',
+        label: 'Incomplete',
+      };
+    }
+
+    if (s === 'processing') {
+      return {
+        className: 'border-cyan-200 bg-cyan-50 text-cyan-700',
+        label: 'Processing',
+      };
+    }
+
+    if (s === 'failed') {
+      return {
+        className: 'border-red-200 bg-red-50 text-red-700',
+        label: 'Failed',
+      };
+    }
+
+    return {
+      className: 'border-slate-200 bg-slate-50 text-slate-700',
+      label: 'Pending',
+    };
+  })();
+  const hasValidation = Boolean(validationResult && validationStatus && validationStatus !== 'pending');
+
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+  };
+
+  const refreshAnalysis = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${apiBaseUrl}/documents/${id}/analysis`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setAnalysis(response.data);
+    } catch (error) {
+      setError(getErrorMessage(error));
+    }
+  };
+
+  const validateExistingEvidence = async () => {
+    if (!analysis?.evidenceFiles?.length) {
+      showToast('No evidence available to validate.', 'error');
+      return;
+    }
+
+    if (!analysis?.mapStatus || analysis.mapStatus !== 'completed') {
+      showToast('Management Action Plan needs to be completed before validation.', 'error');
+      return;
+    }
+
+    try {
+      setActionInProgress(true);
+      await validateCompliance(id);
+      showToast('Validation completed successfully.');
+      await refreshAnalysis();
+    } catch (validationError) {
+      showToast(getErrorMessage(validationError), 'error');
+    } finally {
+      setActionInProgress(false);
+    }
+  };
+
+  const handleEvidenceUploadAndValidate = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setActionInProgress(true);
+      await uploadEvidence(id, file);
+      await validateCompliance(id);
+      showToast('Evidence uploaded and validation completed.');
+      await refreshAnalysis();
+    } catch (uploadError) {
+      showToast(getErrorMessage(uploadError), 'error');
+    } finally {
+      setActionInProgress(false);
+      event.target.value = null;
+    }
+  };
+
   return (
     <main className="min-h-screen bg-[#f6f8fb] px-4 py-8">
       <section className="mx-auto max-w-6xl">
@@ -112,6 +247,48 @@ const Analysis = () => {
               <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
                 Review the generated summary and extracted obligations for this regulatory document.
               </p>
+            </div>
+
+            <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-slate-950">Uploaded Evidence</h2>
+                <p className="text-sm text-slate-500">Evidence Files</p>
+              </div>
+
+              {(analysis?.evidenceFiles || []).length === 0 ? (
+                <div className="mt-4 rounded-lg border border-slate-100 bg-slate-50 p-4 text-sm text-slate-600">
+                  No evidence files uploaded for this document.
+                </div>
+              ) : (
+                <div className="mt-4 space-y-4">
+                  {(analysis.evidenceFiles || []).map((f, idx) => (
+                    <div key={`${f.fileName || 'evidence'}-${idx}`} className="rounded-lg border border-slate-100 p-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <div className="font-semibold text-slate-900">{f.fileName}</div>
+                          <div className="mt-1 text-xs text-slate-500">Uploaded: {f.uploadedAt ? new Date(f.uploadedAt).toLocaleString() : 'Unknown'}</div>
+                          <div className="mt-1 text-xs text-slate-500">Type: {f.fileType || 'unknown'}</div>
+                        </div>
+
+                        <div className="text-right">
+                          <div className="text-sm font-semibold">Extraction</div>
+                          <div className="mt-1 text-xs text-slate-500">{(f.extractionStatus || 'pending').toUpperCase()}</div>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 text-sm text-slate-700">
+                        {f.extractionStatus === 'failed' ? (
+                          <div className="italic text-slate-500">Evidence text could not be extracted.</div>
+                        ) : f.preview ? (
+                          <pre className="whitespace-pre-wrap max-h-40 overflow-auto text-sm">{f.preview}</pre>
+                        ) : (
+                          <div className="italic text-slate-500">No preview available.</div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <Link
@@ -147,6 +324,11 @@ const Analysis = () => {
 
         {analysis && (
           <div className="space-y-6">
+            <Toast
+              message={toast?.message}
+              type={toast?.type}
+              onClose={() => setToast(null)}
+            />
             <div className="grid gap-4 md:grid-cols-[1fr_auto]">
               <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -301,11 +483,83 @@ const Analysis = () => {
             <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div>
+                  <h2 className="text-xl font-bold text-slate-950">Compliance Validation</h2>
+                  <p className="mt-2 text-sm text-slate-600">
+                    Evidence-based validation of whether the Management Action Plans were completed.
+                  </p>
+                </div>
+
+                <div
+                  className={`inline-flex w-fit flex-col rounded-lg border px-5 py-3 ${validationBand.className}`}
+                >
+                  <span className="text-xs font-semibold uppercase">Validation Status</span>
+                  <span className="mt-1 text-sm font-semibold">{validationBand.label}</span>
+
+                  {hasValidation && (
+                    <span className="mt-2 text-2xl font-bold">
+                      {Number(validationResult?.confidence) || 0}%
+                    </span>
+                  )}
+
+                  {!hasValidation && (
+                    <span className="mt-2 text-sm font-semibold">0%</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                {!hasValidation ? (
+                  <div>No validation has been performed yet.</div>
+                ) : (
+                  <div className="space-y-2">
+                    <div>
+                      <span className="font-semibold text-slate-900">Reason:</span>{' '}
+                      {validationResult?.reason || 'Not specified'}
+                    </div>
+                    <div>
+                      <span className="font-semibold text-slate-900">Outcome:</span>{' '}
+                      {validationResult?.status || 'Not specified'}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={validateExistingEvidence}
+                  disabled={actionInProgress || !analysis?.evidenceFiles?.length || analysis?.mapStatus !== 'completed'}
+                  className="inline-flex items-center justify-center rounded-lg bg-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
+                >
+                  {actionInProgress ? 'Processing...' : 'Validate Existing Evidence'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => document.getElementById('analysis-evidence-input')?.click()}
+                  disabled={actionInProgress || analysis?.mapStatus !== 'completed'}
+                  className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-cyan-500 hover:text-cyan-700 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
+                >
+                  {actionInProgress ? 'Processing...' : 'Upload Evidence & Validate'}
+                </button>
+                <input
+                  id="analysis-evidence-input"
+                  type="file"
+                  accept="application/pdf,.pdf,text/plain,.txt"
+                  className="hidden"
+                  onChange={handleEvidenceUploadAndValidate}
+                />
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                <div>
                   <h2 className="text-xl font-bold text-slate-950">Risk Assessment</h2>
                   <p className="mt-2 text-sm text-slate-600">
                     Compliance risk scoring generated from obligations and Management Action Plans.
                   </p>
                 </div>
+
 
                 <div
                   className={`inline-flex w-fit flex-col rounded-lg border px-5 py-3 ${overallRiskBand.className}`}

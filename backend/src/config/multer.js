@@ -18,7 +18,7 @@ const storage = multer.diskStorage({
   },
 });
 
-const fileFilter = (req, file, cb) => {
+const fileFilterPdfOnly = (req, file, cb) => {
   const extension = path.extname(file.originalname).toLowerCase();
   const isPdf = file.mimetype === 'application/pdf' && extension === '.pdf';
 
@@ -29,9 +29,30 @@ const fileFilter = (req, file, cb) => {
   return cb(null, true);
 };
 
+const fileFilterPdfOrTxt = (req, file, cb) => {
+  const extension = path.extname(file.originalname).toLowerCase();
+  const isPdf = file.mimetype === 'application/pdf' && extension === '.pdf';
+  const isTxt = (file.mimetype === 'text/plain' || extension === '.txt');
+
+  if (!(isPdf || isTxt)) {
+    return cb(new multer.MulterError('LIMIT_UNEXPECTED_FILE', 'Only PDF or TXT files are allowed'));
+  }
+
+  return cb(null, true);
+};
+
 const upload = multer({
   storage,
-  fileFilter,
+  fileFilter: fileFilterPdfOnly,
+  limits: {
+    fileSize: maxFileSize,
+    files: 1,
+  },
+});
+
+const evidenceUpload = multer({
+  storage,
+  fileFilter: fileFilterPdfOrTxt,
   limits: {
     fileSize: maxFileSize,
     files: 1,
@@ -40,5 +61,6 @@ const upload = multer({
 
 module.exports = {
   upload,
+  evidenceUpload,
   uploadDir,
 };

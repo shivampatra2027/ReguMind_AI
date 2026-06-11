@@ -391,8 +391,148 @@ const generateRiskAssessment = async (obligations, maps) => {
   };
 };
 
+const validateComplianceCompletion = async (maps, evidenceText) => {
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error('GEMINI_API_KEY is not configured.');
+  }
+
+  const normalizedMaps = Array.isArray(maps) ? maps : [];
+
+  // Debug logging before calling Gemini
+  try {
+    console.log('VALIDATION MAPS:', JSON.stringify(maps, null, 2));
+  } catch (e) {
+    console.log('VALIDATION MAPS: <unserializable maps>');
+  }
+
+  console.log('EVIDENCE TEXT LENGTH:', (evidenceText || '').length);
+  console.log('EVIDENCE TEXT:', evidenceText);
+
+  // Evidence extraction validation: if evidence seems unreadable, return immediately.
+  if (!evidenceText || String(evidenceText).trim().length < 20) {
+    return {
+      status: 'incomplete',
+      confidence: 0,
+      reason: 'Evidence file could not be read.',
+    };
+  }
+
+  // Improved, explicit prompt for validation (semantic matching emphasis)
+  const prompt = `You are a senior banking compliance validation officer.
+
+Your task is to determine whether the uploaded evidence demonstrates completion of the Management Action Plans.
+
+Important:
+
+Evidence does NOT need to contain identical wording.
+
+Use semantic matching.
+
+Examples:
+
+MAP:
+"Implement website disclosure controls"
+
+Evidence:
+"Website disclosure controls have been implemented"
+
+→ completed
+
+MAP:
+"Update bulk deposit framework"
+
+Evidence:
+"Treasury team updated bulk deposit interest rate framework"
+
+→ completed
+
+Classifications:
+
+completed:
+Evidence demonstrates implementation of most or all required actions.
+
+partially_completed:
+Evidence demonstrates some actions but not all.
+
+incomplete:
+Evidence does not demonstrate meaningful completion.
+
+Return JSON only:
+
+{
+"status": "completed | partially_completed | incomplete",
+"confidence": 0-100,
+"reason": "brief explanation"
+}
+
+Management Action Plans (MAPs):
+${JSON.stringify(normalizedMaps, null, 2)}
+
+Uploaded Evidence Text:
+${evidenceText}`;
+
+  const GoogleGenAI = getGoogleGenAI();
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+  const response = await ai.models.generateContent({
+    model,
+    contents: prompt,
+    config: {
+      responseMimeType: 'application/json',
+    },
+  });
+
+  const parsed = extractJson(response.text || '');
+
+  // Raw parsed result for debugging
+  const validationResult = { raw: parsed };
+  try {
+    console.log('VALIDATION RESULT:', JSON.stringify(validationResult, null, 2));
+  } catch (e) {
+    console.log('VALIDATION RESULT: <unserializable result>');
+  }
+
+  // Normalize status
+  const statusRaw = String(parsed?.status || '').trim();
+  const status =
+    statusRaw === 'completed'
+      ? 'completed'
+      : statusRaw === 'partially_completed' || statusRaw === 'partially completed'
+        ? 'partially_completed'
+        : 'incomplete';
+
+  // Normalize confidence (ensure 0-100 integer)
+  let confidence = Number(parsed?.confidence);
+  if (!Number.isFinite(confidence)) confidence = 0;
+  confidence = Math.max(0, Math.min(100, Math.round(confidence)));
+
+  // Enforce confidence rules per classification bands
+  if (status === 'completed') {
+    if (confidence < 80) confidence = 80;
+    if (confidence > 100) confidence = 100;
+  } else if (status === 'partially_completed') {
+    if (confidence < 40) confidence = 40;
+    if (confidence > 69) confidence = 69;
+  } else {
+    // incomplete
+    if (confidence > 39) confidence = 39;
+  }
+
+  // Never return confidence === 1 for readable evidence
+  if (confidence === 1) {
+    if (status === 'completed') confidence = 80;
+    else if (status === 'partially_completed') confidence = 50;
+    else confidence = 0;
+  }
+
+  const reason = String(parsed?.reason || '').trim() || 'No explanation provided by model.';
+
+  return { status, confidence, reason };
+};
+
 module.exports = {
   analyzeComplianceDocument,
   generateManagementActionPlans,
   generateRiskAssessment,
+  validateComplianceCompletion,
 };

@@ -188,6 +188,66 @@ const documentSchema = new mongoose.Schema(
       default: 'pending',
       index: true,
     },
+
+    // Validation Agent (evidence-based compliance completion)
+    validationStatus: {
+      type: String,
+      default: 'pending',
+      index: true,
+    },
+    validationResult: {
+      status: {
+        type: String,
+        default: '',
+        trim: true,
+      },
+      confidence: {
+        type: Number,
+        default: 0,
+        min: 0,
+        max: 100,
+      },
+      reason: {
+        type: String,
+        default: '',
+        trim: true,
+      },
+    },
+    evidenceFiles: [
+      {
+        fileName: {
+          type: String,
+          default: '',
+          trim: true,
+        },
+        filePath: {
+          type: String,
+          default: '',
+        },
+        uploadedAt: {
+          type: Date,
+          default: Date.now,
+        },
+        fileType: {
+          type: String,
+          default: '',
+          trim: true,
+        },
+        extractedText: {
+          type: String,
+          default: '',
+        },
+        extractionStatus: {
+          type: String,
+          enum: ['pending', 'success', 'failed'],
+          default: 'pending',
+        },
+      },
+    ],
+
+    // Keep field order stable for readability and future extensions
+    // (Validation Agent fields are appended here intentionally)
+
   },
   { timestamps: true }
 );
