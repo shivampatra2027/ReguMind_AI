@@ -39,23 +39,7 @@ const Login = () => (
       <div className="mt-10 flex flex-col gap-4">
         <GoogleAuthButton />
 
-        <button
-          onClick={() => {
-            localStorage.setItem('token', 'demo');
-            localStorage.setItem(
-  'user',
-  JSON.stringify({
-    name: 'ReguMind Administrator',
-    email: 'admin@regumind.ai',
-    role: 'System Admin',
-  })
-);
-            window.location.href = '/dashboard';
-          }}
-          className="rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 px-4 py-3 font-semibold text-white transition hover:scale-105"
-        >
-          Enter Demo Workspace
-        </button>
+        
       </div>
 
       <div className="mt-8 border-t border-white/10 pt-6 text-center text-sm text-slate-400">
