@@ -8,7 +8,7 @@ const {
   generateManagementActionPlans,
   generateRiskAssessment,
   validateComplianceCompletion,
-} = require('../services/gemini.service');
+} = require('../services/ollama.service');
 
 const backendRoot = path.resolve(__dirname, '..', '..');
 
@@ -322,8 +322,8 @@ const analyzeDocument = async (req, res) => {
     document.analysisStatus = 'processing';
     await document.save();
 
-    console.log('GEMINI ANALYSIS DOCUMENT ID:', document._id.toString());
-    console.log('GEMINI ANALYSIS RAW TEXT LENGTH:', document.rawText.length);
+    console.log('OLLAMA ANALYSIS DOCUMENT ID:', document._id.toString());
+    console.log('OLLAMA ANALYSIS RAW TEXT LENGTH:', document.rawText.length);
 
     const analysis = await analyzeComplianceDocument(document.rawText);
 
@@ -332,8 +332,8 @@ const analyzeDocument = async (req, res) => {
     document.analysisStatus = 'completed';
     await document.save();
 
-    console.log('GEMINI ANALYSIS SUMMARY LENGTH:', analysis.summary.length);
-    console.log('GEMINI ANALYSIS OBLIGATIONS COUNT:', analysis.obligations.length);
+    console.log('OLLAMA ANALYSIS SUMMARY LENGTH:', analysis.summary.length);
+    console.log('OLLAMA ANALYSIS OBLIGATIONS COUNT:', analysis.obligations.length);
 
     return res.status(200).json({
       success: true,
@@ -341,12 +341,12 @@ const analyzeDocument = async (req, res) => {
       obligationsCount: document.obligations.length,
     });
   } catch (error) {
-    console.error('GEMINI ANALYSIS ERROR:', error);
+    console.error('OLLAMA ANALYSIS ERROR:', error);
 
     if (document) {
       document.analysisStatus = 'failed';
       await document.save().catch((saveError) => {
-        console.error('GEMINI ANALYSIS STATUS UPDATE ERROR:', saveError);
+        console.error('OLLAMA ANALYSIS STATUS UPDATE ERROR:', saveError);
       });
     }
 
@@ -649,7 +649,7 @@ const validateDocumentCompliance = async (req, res) => {
 
     const evidenceText = evidenceTextChunks.join('\n\n');
 
-    // Guardrail: do not call Gemini if extracted text is insufficient
+    // Guardrail: do not call Ollama if extracted text is insufficient
     if (!evidenceText || evidenceText.trim().length < 50) {
       document.validationStatus = 'incomplete';
       document.validationResult = {
