@@ -53,16 +53,20 @@ const getRiskBand = (score) => {
 
 const Analysis = () => {
   const { id } = useParams();
+
+const documentId =
+  id || localStorage.getItem('documentId');
+
   const navigate = useNavigate();
   const [analysis, setAnalysis] = useState(null);
-  const [isLoading, setIsLoading] = useState(Boolean(id));
+  const [isLoading, setIsLoading] = useState(Boolean(documentId));
   const [error, setError] = useState('');
   const [toast, setToast] = useState(null);
   const [actionInProgress, setActionInProgress] = useState(false);
 
   useEffect(() => {
     const fetchAnalysis = async () => {
-      if (!id) {
+      if (!documentId) {
         setAnalysis(null);
         setIsLoading(false);
         return;
@@ -79,7 +83,7 @@ const Analysis = () => {
         setIsLoading(true);
         setError('');
 
-        const response = await axios.get(`${apiBaseUrl}/documents/${id}/analysis`, {
+        const response = await axios.get(`${apiBaseUrl}/documents/${documentId}/analysis`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -95,7 +99,7 @@ const Analysis = () => {
     };
 
     fetchAnalysis();
-  }, [id, navigate]);
+  }, [documentId, navigate]);
 
   const obligations = analysis?.obligations || [];
   const maps = analysis?.maps || [];
@@ -169,7 +173,7 @@ const Analysis = () => {
     }
 
     return {
-      className: 'border-slate-200 bg-slate-50 text-slate-700',
+      className: 'border-slate-200 bg-cyan-500/10 text-slate-700',
       label: 'Pending',
     };
   })();
@@ -182,7 +186,7 @@ const Analysis = () => {
   const refreshAnalysis = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${apiBaseUrl}/documents/${id}/analysis`, {
+      const response = await axios.get(`${apiBaseUrl}/documents/${documentId}/analysis`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setAnalysis(response.data);
@@ -204,7 +208,7 @@ const Analysis = () => {
 
     try {
       setActionInProgress(true);
-      await validateCompliance(id);
+      await validateCompliance(documentId);
       showToast('Validation completed successfully.');
       await refreshAnalysis();
     } catch (validationError) {
@@ -221,7 +225,7 @@ const Analysis = () => {
     try {
       setActionInProgress(true);
       await uploadEvidence(id, file);
-      await validateCompliance(id);
+      await validateCompliance(documentId);
       showToast('Evidence uploaded and validation completed.');
       await refreshAnalysis();
     } catch (uploadError) {
@@ -233,30 +237,51 @@ const Analysis = () => {
   };
 
   return (
-    <main className="min-h-screen bg-[#f6f8fb] px-4 py-8">
+    <main className="min-h-screen bg-gradient-to-br from-[#a62121] via-[#000000] to-[#c62525] px-4 py-8 text-white overflow-hidden">
+      <div className="fixed inset-0 overflow-hidden -z-10">
+
+  <div className="absolute -top-40 -left-40 h-[500px] w-[500px] rounded-full bg-fuchsia-500/30 blur-[180px] animate-blob"></div>
+
+  <div className="absolute top-20 right-0 h-[500px] w-[500px] rounded-full bg-cyan-500/30 blur-[180px] animate-blob animation-delay-2000"></div>
+
+  <div className="absolute bottom-0 left-1/3 h-[500px] w-[500px] rounded-full bg-purple-500/30 blur-[180px] animate-blob animation-delay-4000"></div>
+
+  <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
+
+</div>
       <section className="mx-auto max-w-6xl">
         <WorkflowStepper currentStep={1} />
 
-        <div className="mb-8 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div className="
+mb-8
+rounded-[32px]
+border border-cyan-500/20
+bg-white/[0.05]
+backdrop-blur-2xl
+p-8
+shadow-[0_0_50px_rgba(6,182,212,0.15)]
+">
+  <div className="grid gap-6 lg:grid-cols-[1fr_350px_auto]">
             <div>
-              <p className="text-sm font-semibold uppercase text-cyan-700">AI Compliance Analysis</p>
-              <h1 className="mt-2 text-3xl font-bold text-slate-950 md:text-4xl">
-                {analysis?.title || 'Document analysis'}
+              <p className="text-sm font-semibold uppercase text-black-700">AI Compliance Analysis</p>
+              <h1 className="mt-2 break-words text-2xl font-bold text-white md:text-3xl">
+                <div className="break-all">
+  {analysis?.title || 'Document analysis'}
+</div>
               </h1>
-              <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
+              <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300">
                 Review the generated summary and extracted obligations for this regulatory document.
               </p>
             </div>
 
-            <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="w-full rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold text-slate-950">Uploaded Evidence</h2>
                 <p className="text-sm text-slate-500">Evidence Files</p>
               </div>
 
               {(analysis?.evidenceFiles || []).length === 0 ? (
-                <div className="mt-4 rounded-lg border border-slate-100 bg-slate-50 p-4 text-sm text-slate-600">
+                <div className="mt-4 rounded-lg border border-slate-100 bg-slate-50 p-4 text-sm text-slate-800">
                   No evidence files uploaded for this document.
                 </div>
               ) : (
@@ -293,7 +318,7 @@ const Analysis = () => {
 
             <Link
               to="/documents"
-              className="inline-flex items-center justify-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-cyan-500 hover:text-cyan-700"
+              className="inline-flex items-center justify-center rounded-lg border border-slate-100 px-4 py-2 text-sm font-semibold text-slate-100 transition hover:border-red-500 hover:text-red-700"
             >
               Back to documents
             </Link>
@@ -303,7 +328,7 @@ const Analysis = () => {
         {!id && (
           <div className="rounded-lg border border-amber-200 bg-white p-6 shadow-sm">
             <h2 className="text-lg font-semibold text-slate-950">Select a document first</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
+            <p className="mt-2 text-sm leading-6 text-slate-300">
               Open Document History and choose a document to view its analysis.
             </p>
           </div>
@@ -311,7 +336,7 @@ const Analysis = () => {
 
         {isLoading && (
           <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-sm font-medium text-slate-600">Loading analysis...</p>
+            <p className="text-sm font-medium text-slate-300">Loading analysis...</p>
           </div>
         )}
 
@@ -398,24 +423,31 @@ const Analysis = () => {
 
             <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
               <h2 className="text-xl font-bold text-slate-950">Management Action Plans</h2>
-              <p className="mt-2 text-sm text-slate-600">
+              <p className="mt-2 text-sm text-slate-300">
                 Actionable compliance plans generated from extracted obligations.
               </p>
 
               <div className="mt-6 grid gap-4 lg:grid-cols-2">
                 {analysis?.mapStatus !== 'completed' ? (
-                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-300">
                     No management action plans generated yet.
                   </div>
                 ) : maps.length === 0 ? (
-                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-300">
                     No management action plans found for this document.
                   </div>
                 ) : (
                   maps.map((map, index) => (
                     <div
                       key={`${map.obligationTitle || 'map'}-${index}`}
-                      className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+                      className="
+rounded-3xl
+border border-cyan-500/20
+bg-white/[0.05]
+backdrop-blur-xl
+p-5
+shadow-[0_0_25px_rgba(6,182,212,0.15)]
+"
                     >
                       <div className="flex flex-col gap-2">
                         <div className="text-sm font-semibold uppercase text-cyan-700">
@@ -484,7 +516,7 @@ const Analysis = () => {
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div>
                   <h2 className="text-xl font-bold text-slate-950">Compliance Validation</h2>
-                  <p className="mt-2 text-sm text-slate-600">
+                  <p className="mt-2 text-sm text-slate-500">
                     Evidence-based validation of whether the Management Action Plans were completed.
                   </p>
                 </div>
@@ -529,7 +561,7 @@ const Analysis = () => {
                   type="button"
                   onClick={validateExistingEvidence}
                   disabled={actionInProgress || !analysis?.evidenceFiles?.length || analysis?.mapStatus !== 'completed'}
-                  className="inline-flex items-center justify-center rounded-lg bg-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
+                  className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-red-600 via-red-500 to-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-900"
                 >
                   {actionInProgress ? 'Processing...' : 'Validate Existing Evidence'}
                 </button>
@@ -555,7 +587,7 @@ const Analysis = () => {
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div>
                   <h2 className="text-xl font-bold text-slate-950">Risk Assessment</h2>
-                  <p className="mt-2 text-sm text-slate-600">
+                  <p className="mt-2 text-sm text-slate-500">
                     Compliance risk scoring generated from obligations and Management Action Plans.
                   </p>
                 </div>
@@ -574,11 +606,11 @@ const Analysis = () => {
 
               <div className="mt-6 grid gap-4 lg:grid-cols-2">
                 {analysis?.riskStatus !== 'completed' ? (
-                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-300">
                     No risk assessment generated yet.
                   </div>
                 ) : risks.length === 0 ? (
-                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-300">
                     No risk assessment items found for this document.
                   </div>
                 ) : (
@@ -588,7 +620,7 @@ const Analysis = () => {
                     return (
                       <div
                         key={`${risk.obligationTitle || 'risk'}-${index}`}
-                        className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+                        className="rounded-lg border border-slate-200 bg-white/[0.05] backdrop-blur-xl p-5 shadow-sm"
                       >
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                           <div>
@@ -627,7 +659,17 @@ const Analysis = () => {
                 )}
               </div>
             </div>
+            <div className="flex justify-end mt-6">
+  <button
+    onClick={() => navigate(`/risk/${documentId}`)}
+    className="rounded-lg bg-black px-6 py-3 text-white font-semibold hover:bg-gray-600"
+  >
+    Next: Risk Scoring Dashboard →
+  </button>
+</div>
+            
           </div>
+          
         )}
       </section>
     </main>

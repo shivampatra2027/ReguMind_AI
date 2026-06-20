@@ -1,10 +1,61 @@
 import WorkflowStepper from "../components/WorkflowStepper";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { useNavigate, useParams } from "react-router-dom";
 
 const RiskScoring = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
+
+  const [analysis, setAnalysis] = useState(null);
+
+  const apiBaseUrl =
+    import.meta.env.VITE_API_BASE_URL ||
+    "http://localhost:5000/api";
+
+  useEffect(() => {
+    const fetchRiskData = async () => {
+      try {
+        const token = localStorage.getItem("token");
+
+        const response = await axios.get(
+          `${apiBaseUrl}/documents/${id}/analysis`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        setAnalysis(response.data);
+      } catch (err) {
+        console.error("Error fetching risk data:", err);
+      }
+    };
+
+    if (id) {
+      fetchRiskData();
+    }
+  }, [id]);
+
+  const risks = analysis?.risks || [];
+
+  const highRisk = risks.filter(
+    (r) => Number(r.riskScore) > 80
+  ).length;
+
+  const mediumRisk = risks.filter(
+    (r) =>
+      Number(r.riskScore) > 30 &&
+      Number(r.riskScore) <= 80
+  ).length;
+
+  const lowRisk = risks.filter(
+    (r) => Number(r.riskScore) <= 30
+  ).length;
+
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-cyan-100 p-8">
+    <main className="min-h-screen bg-gradient-to-br from-cyan-200 via-white to-cyan-200 p-8">
 
       <div className="fixed inset-0 -z-10 overflow-hidden">
         <div className="absolute top-20 left-20 h-72 w-72 rounded-full bg-blue-400/20 blur-3xl"></div>
@@ -37,11 +88,11 @@ const RiskScoring = () => {
             </p>
 
             <h2 className="mt-4 text-5xl font-bold">
-              --
+              {highRisk}
             </h2>
 
             <p className="mt-2 text-red-100">
-              No analysis available
+              {highRisk} high-risk obligations
             </p>
           </div>
 
@@ -51,11 +102,11 @@ const RiskScoring = () => {
             </p>
 
             <h2 className="mt-4 text-5xl font-bold">
-              --
+              {mediumRisk}
             </h2>
 
             <p className="mt-2 text-yellow-100">
-              No analysis available
+              {mediumRisk} medium-risk obligations
             </p>
           </div>
 
@@ -65,11 +116,11 @@ const RiskScoring = () => {
             </p>
 
             <h2 className="mt-4 text-5xl font-bold">
-              --
+              {lowRisk}
             </h2>
 
             <p className="mt-2 text-green-100">
-              No analysis available
+              {lowRisk} low-risk obligations
             </p>
           </div>
 
@@ -82,7 +133,7 @@ const RiskScoring = () => {
 
           <div className="mt-8 flex justify-center">
             <div className="flex h-48 w-48 items-center justify-center rounded-full border-[16px] border-cyan-500 text-5xl font-bold text-cyan-600">
-              --
+              {analysis?.overallRiskScore || 0}
             </div>
           </div>
 
@@ -92,7 +143,7 @@ const RiskScoring = () => {
         </div>
 <div className="mt-8 flex justify-end">
   <button
-    onClick={() => navigate("/audit")}
+    onClick={() => navigate(`/audit/${id}`)}
     className="rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 px-6 py-3 font-semibold text-white shadow-lg transition hover:scale-105"
   >
     Generate Audit Report →

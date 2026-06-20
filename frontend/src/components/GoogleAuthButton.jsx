@@ -1,51 +1,34 @@
-import { GoogleLogin } from '@react-oauth/google';
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { googleLogin } from '../services/authService';
 
 const GoogleAuthButton = () => {
   const navigate = useNavigate();
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSuccess = async (credentialResponse) => {
-    if (!credentialResponse.credential) {
-      setError('Google login failed. Please try again.');
-      return;
-    }
+  const handleDemoLogin = () => {
+    // Demo user for offline hackathon mode
+    const demoUser = {
+      name: 'Demo User',
+      email: 'demo@regumind.ai',
+      role: 'Compliance Officer',
+    };
 
-    try {
-      setIsLoading(true);
-      setError('');
+    localStorage.setItem('token', 'demo-token');
+    localStorage.setItem('user', JSON.stringify(demoUser));
 
-      const data = await googleLogin(credentialResponse.credential);
-
-      if (!data.success || !data.token || !data.user) {
-        throw new Error('Invalid authentication response.');
-      }
-
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-
-      navigate('/dashboard');
-    } catch (apiError) {
-      setError(apiError.response?.data?.message || apiError.message || 'Unable to sign in with Google.');
-    } finally {
-      setIsLoading(false);
-    }
+    navigate('/dashboard');
   };
 
   return (
     <div className="flex w-full flex-col items-center gap-3">
-      <div className={isLoading ? 'pointer-events-none opacity-60' : ''}>
-        <GoogleLogin onSuccess={handleSuccess} onError={() => setError('Google login failed. Please try again.')} />
-      </div>
+      <button
+        onClick={handleDemoLogin}
+        className="w-full rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-6 py-3 font-semibold text-white shadow-lg transition hover:scale-105"
+      >
+        Continue to Dashboard
+      </button>
 
-      {error ? (
-        <p className="w-full rounded-md border border-red-200 bg-red-50 px-3 py-2 text-center text-sm text-red-700">
-          {error}
-        </p>
-      ) : null}
+      <p className="text-sm text-slate-500">
+        Demo mode (Offline Hackathon)
+      </p>
     </div>
   );
 };

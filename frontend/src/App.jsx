@@ -43,6 +43,15 @@ const App = () => (
   />
 
   <Route
+  path="/analysis/:id"
+  element={
+    <ProtectedRoute>
+      <Analysis />
+    </ProtectedRoute>
+  }
+/>
+
+  <Route
     path="/analysis"
     element={
       <ProtectedRoute>
@@ -52,31 +61,23 @@ const App = () => (
   />
 
   <Route
-    path="/analysis/:id"
-    element={
-      <ProtectedRoute>
-        <Analysis />
-      </ProtectedRoute>
-    }
-  />
+  path="/risk/:id"
+  element={
+    <ProtectedRoute>
+      <RiskScoring />
+    </ProtectedRoute>
+  }
+/>
+
 
   <Route
-    path="/risk"
-    element={
-      <ProtectedRoute>
-        <RiskScoring />
-      </ProtectedRoute>
-    }
-  />
-
-  <Route
-    path="/audit"
-    element={
-      <ProtectedRoute>
-        <AuditReport />
-      </ProtectedRoute>
-    }
-  />
+  path="/audit/:id"
+  element={
+    <ProtectedRoute>
+      <AuditReport />
+    </ProtectedRoute>
+  }
+/>
 
   <Route
     path="/evidence"

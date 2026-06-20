@@ -1,11 +1,45 @@
 import WorkflowStepper from "../components/WorkflowStepper";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { useNavigate, useParams } from "react-router-dom";
 
 const AuditReport = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
+
+const [analysis, setAnalysis] = useState(null);
+
+const apiBaseUrl =
+  import.meta.env.VITE_API_BASE_URL ||
+  "http://localhost:5000/api";
+
+useEffect(() => {
+  const fetchAuditData = async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const response = await axios.get(
+        `${apiBaseUrl}/documents/${id}/analysis`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setAnalysis(response.data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  if (id) {
+    fetchAuditData();
+  }
+}, [id]);
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-cyan-100 p-8">
+    <main className="min-h-screen bg-gradient-to-br from-black via-purple-900 to-cyan-100 p-8">
 
       <div className="fixed inset-0 -z-10 overflow-hidden">
         <div className="absolute top-20 left-20 h-72 w-72 rounded-full bg-blue-400/20 blur-3xl"></div>
@@ -23,11 +57,11 @@ const AuditReport = () => {
             AI Audit Engine
           </span>
 
-          <h1 className="mt-4 text-5xl font-bold text-slate-900">
+          <h1 className="mt-4 text-5xl font-bold text-slate-200">
             Audit Report
           </h1>
 
-          <p className="mt-3 text-lg text-slate-600">
+          <p className="mt-3 text-lg text-slate-400">
             AI-generated audit findings, compliance observations and recommendations.
           </p>
         </div>
@@ -40,27 +74,27 @@ const AuditReport = () => {
             </p>
 
             <h2 className="mt-4 text-4xl font-bold">
-              Pending
+              {analysis?.riskStatus || "Pending"}
             </h2>
           </div>
 
           <div className="rounded-3xl bg-white/80 backdrop-blur-xl p-6 shadow-xl">
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-700">
               Findings
             </p>
 
             <h2 className="mt-4 text-5xl font-bold text-slate-900">
-              --
+              {analysis?.obligations?.length || 0}
             </h2>
           </div>
 
           <div className="rounded-3xl bg-white/80 backdrop-blur-xl p-6 shadow-xl">
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-700">
               Compliance Level
             </p>
 
             <h2 className="mt-4 text-3xl font-bold text-green-600">
-              Awaiting Report
+              {analysis?.validationStatus || "Pending"}
             </h2>
           </div>
 
@@ -79,7 +113,7 @@ const AuditReport = () => {
 
           <div className="mt-6 rounded-2xl bg-blue-50 p-5">
             <p className="font-medium text-blue-700">
-              No audit report generated yet.
+              {analysis?.summary || "No audit report generated yet."}
             </p>
           </div>
         </div>
