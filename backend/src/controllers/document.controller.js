@@ -115,13 +115,15 @@ const uploadDocument = async (req, res) => {
       document: toDocumentResponse(document),
     });
   } catch (error) {
-    await removeUploadedFile(req.file.path);
+  console.error('UPLOAD ERROR:', error);
 
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to upload document',
-    });
-  }
+  await removeUploadedFile(req.file.path);
+
+  return res.status(500).json({
+    success: false,
+    message: error.message,
+  });
+}
 };
 
 const getDocuments = async (req, res) => {

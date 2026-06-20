@@ -16,3 +16,69 @@ body {
   min-width: 320px;
   min-height: 100vh;
 }
+@keyframes blob {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+
+  33% {
+    transform: translate(50px, -80px) scale(1.1);
+  }
+
+  66% {
+    transform: translate(-40px, 40px) scale(0.9);
+  }
+
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+}
+
+.animate-blob {
+  animation: blob 12s infinite ease-in-out;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
+
+@keyframes aurora {
+  0% { transform: translateX(-5%) translateY(-5%) scale(1); }
+  50% { transform: translateX(5%) translateY(5%) scale(1.1); }
+  100% { transform: translateX(-5%) translateY(-5%) scale(1); }
+}
+
+.animate-aurora {
+  animation: aurora 20s ease-in-out infinite;
+}
+
+@keyframes blob {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+}
+
+.animate-blob {
+  animation: blob 10s infinite ease-in-out;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}

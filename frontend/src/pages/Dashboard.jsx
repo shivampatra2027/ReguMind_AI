@@ -24,14 +24,18 @@ const Dashboard = () => {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-cyan-400 px-4 py-8">
-      <div className="fixed inset-0 -z-10 overflow-hidden">
-      <div className="absolute top-20 left-20 h-72 w-72 rounded-full bg-blue-400/30 blur-3xl"></div>
+    <main className="min-h-screen bg-gradient-to-br from-[#0a0f2e] via-[#36227d] to-[#0d3f78] text-white px-4 py-8 overflow-hidden">
+      <div className="fixed inset-0 overflow-hidden -z-10">
 
-      <div className="absolute top-40 right-20 h-72 w-72 rounded-full bg-cyan-400/30 blur-3xl"></div>
+  <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(168,85,247,0.25),transparent_30%),radial-gradient(circle_at_80%_30%,rgba(6,182,212,0.25),transparent_30%),radial-gradient(circle_at_50%_80%,rgba(59,130,246,0.25),transparent_30%)] animate-aurora"></div>
 
-      <div className="absolute bottom-20 left-1/2 h-72 w-72 rounded-full bg-indigo-400/20 blur-3xl"></div>
-    </div>
+  <div className="absolute -top-40 -left-40 h-[500px] w-[500px] rounded-full bg-fuchsia-500/30 blur-[220px] animate-blob"></div>
+
+  <div className="absolute top-20 right-0 h-[500px] w-[500px] rounded-full bg-cyan-500/30 blur-[220px] animate-blob animation-delay-2000"></div>
+
+  <div className="absolute bottom-0 left-1/3 h-[500px] w-[500px] rounded-full bg-blue-500/30 blur-[220px] animate-blob animation-delay-4000"></div>
+
+</div>
       
       <section className="mx-auto max-w-6xl">
 
@@ -56,7 +60,7 @@ const Dashboard = () => {
         </div>
 
         {/* Profile Card */}
-        <div className="rounded-3xl border border-slate-100 bg-white/80 backdrop-blur-xl p-8 shadow-xl">
+        <div className="rounded-3xl border border-slate-100 bg-white/[0.04] backdrop-blur-xl p-8 shadow-xl">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
             <img
               src={
@@ -68,11 +72,11 @@ const Dashboard = () => {
             />
 
             <div>
-              <h2 className="text-3xl font-bold text-slate-900">
+              <h2 className="text-3xl font-bold text-white">
                 {user.name || 'ReguMind User'}
               </h2>
 
-              <p className="mt-1 text-slate-600">
+              <p className="mt-1 text-cyan-200">
                 {user.email || 'user@regumind.ai'}
               </p>
 
@@ -90,9 +94,13 @@ const Dashboard = () => {
   {/* Upload PDF */}
   <button
     onClick={() => navigate('/upload')}
-    className="rounded-3xl bg-gradient-to-r from-blue-500 via-blue-600 to-cyan-500 p-10 text-left text-white shadow-xl transition-all duration-300 hover:scale-[1.02]"
+    className="rounded-[32px]
+border border-fuchsia-500/100
+bg-white/[0.04]
+backdrop-blur-xl
+shadow-[0_0_40px_rgba(168,85,247,0.2)] p-10 text-left text-white shadow-xl transition-all duration-300 hover:scale-[1.02]"
   >
-    <h2 className="text-3xl font-bold">
+    <h2 className="text-4xl font-bold text-fuchsia-300">
       Upload PDF
     </h2>
 
@@ -110,13 +118,13 @@ const Dashboard = () => {
   {/* View History */}
   <button
     onClick={() => navigate('/documents')}
-    className="rounded-3xl bg-white/80 backdrop-blur-xl p-10 text-left shadow-xl border border-slate-200 transition-all duration-300 hover:scale-[1.02] hover:border-cyan-500"
+    className="rounded-3xl bg-white/[0.04] backdrop-blur-xl p-10 text-left shadow-xl border border-slate-200 transition-all duration-300 hover:scale-[1.02] hover:border-cyan-500"
   >
-    <h2 className="text-3xl font-bold text-slate-900">
+    <h2 className="text-3xl font-bold text-cyan-300">
       View History
     </h2>
 
-    <p className="mt-3 text-lg text-slate-600">
+    <p className="mt-3 text-lg text-white">
       Access previously uploaded documents, analysis results, risk reports and audit reports.
     </p>
 
