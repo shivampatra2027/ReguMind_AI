@@ -333,7 +333,7 @@ shadow-[0_0_30px_rgba(16,185,129,0.15)]
                 <dl className="mt-5 space-y-4 text-sm">
                   <div>
                     <dt className="font-medium text-cyan-300">Document ID</dt>
-                    <dd className="mt-1 break-all font-semibold text-slate-950">{success.id}</dd>
+                    <dd className="mt-1 break-all font-semibold text-white">{success.id}</dd>
                   </div>
                   <div>
                     <dt className="font-medium text-cyan-300">Status</dt>
