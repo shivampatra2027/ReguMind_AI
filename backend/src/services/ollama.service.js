@@ -335,7 +335,7 @@ const callOllama = async (prompt) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        timeout: 800000,
+        timeout: 700000,
       }
     );
 
